@@ -1,1 +1,1110 @@
+<!DOCTYPE html>
 
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="日記">
+<meta name="theme-color" content="#ffffff">
+<title>日記 · Nikki — Diario</title>
+<link rel="manifest" href="manifest.json">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=JetBrains+Mono:wght@300;400;500;600&family=Noto+Serif+JP:wght@300;400;500;600&display=swap');
+
+:root {
+–bg-primary: #ffffff;
+–bg-secondary: #f7f7f7;
+–bg-tertiary: #eeeeee;
+–bg-card: #f7f7f7;
+–bg-card-hover: #eeeeee;
+–bg-input: #ffffff;
+–text-primary: #000000;
+–text-secondary: #1a1a1a;
+–text-tertiary: #444444;
+–text-accent: #000000;
+–border-primary: #bbbbbb;
+–border-subtle: #dddddd;
+–accent: #000000;
+–accent-soft: rgba(0,0,0,0.05);
+–accent-hover: #333333;
+–danger: #aa0000;
+–danger-soft: rgba(170,0,0,0.07);
+–success: #333333;
+–success-soft: rgba(51,51,51,0.07);
+–shadow: 0 2px 12px rgba(0,0,0,0.08);
+–shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+–radius: 2px;
+–radius-lg: 4px;
+–transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme=“washi”] {
+–bg-primary: #0a0a0a;
+–bg-secondary: #111111;
+–bg-tertiary: #1a1a1a;
+–bg-card: #141414;
+–bg-card-hover: #1e1e1e;
+–bg-input: #0a0a0a;
+–text-primary: #e8e8e8;
+–text-secondary: #bbbbbb;
+–text-tertiary: #777777;
+–text-accent: #ffffff;
+–border-primary: #333333;
+–border-subtle: #1e1e1e;
+–accent: #ffffff;
+–accent-soft: rgba(255,255,255,0.07);
+–accent-hover: #cccccc;
+–danger: #ff4444;
+–danger-soft: rgba(255,68,68,0.1);
+–success: #aaaaaa;
+–success-soft: rgba(170,170,170,0.1);
+–shadow: 0 2px 12px rgba(0,0,0,0.5);
+–shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+- { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+height: 100%;
+font-family: ‘Special Elite’, ‘JetBrains Mono’, ‘Courier New’, monospace;
+background: var(–bg-primary);
+color: var(–text-primary);
+overflow: hidden;
+}
+
+body {
+display: flex;
+flex-direction: column;
+padding-top: env(safe-area-inset-top);
+padding-bottom: env(safe-area-inset-bottom);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(–border-primary); border-radius: 2px; }
+
+/* ─── Header ─── */
+.app-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 16px 20px 12px;
+border-bottom: 1px solid var(–border-subtle);
+flex-shrink: 0;
+}
+
+.app-title {
+display: flex;
+align-items: baseline;
+gap: 10px;
+cursor: pointer;
+}
+
+.app-title .kanji {
+font-family: ‘Noto Serif JP’, serif;
+font-size: 1.5rem;
+font-weight: 400;
+color: var(–text-accent);
+letter-spacing: 0.15em;
+}
+
+.app-title .romaji {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 0.7rem;
+color: var(–text-tertiary);
+letter-spacing: 0.25em;
+text-transform: uppercase;
+}
+
+.header-actions { display: flex; gap: 8px; }
+
+.icon-btn {
+width: 36px; height: 36px;
+display: flex; align-items: center; justify-content: center;
+background: none; border: 1px solid var(–border-primary);
+border-radius: 2px;
+color: var(–text-secondary);
+cursor: pointer;
+transition: all var(–transition);
+font-size: 1rem;
+font-family: ‘JetBrains Mono’, monospace;
+}
+.icon-btn:hover, .icon-btn:active {
+background: var(–accent-soft);
+color: var(–text-accent);
+border-color: var(–accent);
+}
+
+/* ─── Nav tabs ─── */
+.nav-tabs {
+display: flex;
+padding: 8px 20px;
+gap: 4px;
+border-bottom: 1px solid var(–border-subtle);
+flex-shrink: 0;
+overflow-x: auto;
+-webkit-overflow-scrolling: touch;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+padding: 8px 16px;
+font-family: ‘JetBrains Mono’, ‘Courier New’, monospace;
+font-size: 0.75rem;
+color: var(–text-tertiary);
+background: none;
+border: none;
+border-radius: 2px;
+cursor: pointer;
+transition: all var(–transition);
+white-space: nowrap;
+letter-spacing: 0.05em;
+text-transform: uppercase;
+}
+.nav-tab:hover { color: var(–text-secondary); background: var(–accent-soft); }
+.nav-tab.active { color: var(–text-accent); background: var(–accent-soft); font-weight: 500; }
+.nav-tab .tab-count { font-size: 0.7rem; opacity: 0.6; margin-left: 4px; }
+
+/* ─── Main ─── */
+.main-content {
+flex: 1;
+overflow-y: auto;
+padding: 20px;
+scroll-behavior: smooth;
+-webkit-overflow-scrolling: touch;
+}
+
+/* ─── Topics ─── */
+.topics-grid { display: grid; gap: 12px; }
+
+.topic-card {
+background: var(–bg-card);
+border: 1px solid var(–border-subtle);
+border-radius: var(–radius-lg);
+padding: 18px 20px;
+cursor: pointer;
+transition: all var(–transition);
+display: flex;
+align-items: center;
+gap: 16px;
+opacity: 0;
+}
+.topic-card:hover, .topic-card:active {
+background: var(–bg-card-hover);
+border-color: var(–border-primary);
+transform: translateY(-1px);
+box-shadow: var(–shadow);
+}
+
+.topic-icon {
+font-size: 1.6rem;
+width: 44px; height: 44px;
+display: flex; align-items: center; justify-content: center;
+background: var(–accent-soft);
+border-radius: 2px;
+flex-shrink: 0;
+}
+
+.topic-info { flex: 1; min-width: 0; }
+.topic-name { font-size: 1rem; font-weight: 500; color: var(–text-primary); margin-bottom: 2px; letter-spacing: 0.02em; }
+.topic-meta { font-family: ‘JetBrains Mono’, monospace; font-size: 0.7rem; color: var(–text-tertiary); letter-spacing: 0.05em; }
+.topic-alarm-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.7rem; color: var(–accent); margin-left: 8px; }
+.topic-count { font-family: ‘JetBrains Mono’, monospace; font-size: 1.3rem; font-weight: 300; color: var(–text-tertiary); padding-right: 4px; }
+
+/* ─── View header ─── */
+.view-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.back-btn { font-size: 1.2rem; color: var(–text-secondary); background: none; border: none; cursor: pointer; padding: 4px 8px; transition: color var(–transition); }
+.back-btn:hover { color: var(–text-accent); }
+.view-title { font-size: 1.1rem; font-weight: 500; color: var(–text-primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.03em; }
+
+/* ─── Subsections ─── */
+.subsection-group { margin-bottom: 24px; }
+.subsection-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; margin-bottom: 8px; border-bottom: 1px solid var(–border-subtle); }
+.subsection-name { font-family: ‘JetBrains Mono’, monospace; font-size: 0.75rem; font-weight: 500; color: var(–text-accent); letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* ─── Entry cards ─── */
+.entry-card {
+background: var(–bg-card);
+border: 1px solid var(–border-subtle);
+border-radius: var(–radius);
+padding: 14px 16px;
+margin-bottom: 8px;
+transition: all var(–transition);
+cursor: pointer;
+opacity: 0;
+}
+.entry-card:hover { background: var(–bg-card-hover); border-color: var(–border-primary); }
+.entry-date { font-family: ‘JetBrains Mono’, monospace; font-size: 0.7rem; color: var(–text-tertiary); margin-bottom: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
+.entry-text { font-size: 0.9rem; color: var(–text-primary); line-height: 1.85; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.02em; }
+.entry-alarm { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-family: ‘JetBrains Mono’, monospace; font-size: 0.7rem; color: var(–accent); background: var(–accent-soft); padding: 3px 8px; border-radius: 2px; letter-spacing: 0.05em; }
+
+/* ─── Entry detail ─── */
+.entry-detail-text { font-size: 1rem; line-height: 2; color: var(–text-primary); white-space: pre-wrap; word-break: break-word; padding: 16px 0; letter-spacing: 0.02em; }
+.entry-detail-meta { font-family: ‘JetBrains Mono’, monospace; font-size: 0.7rem; color: var(–text-tertiary); padding-bottom: 16px; border-bottom: 1px solid var(–border-subtle); margin-bottom: 16px; letter-spacing: 0.05em; text-transform: uppercase; }
+.entry-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ─── FAB ─── */
+.fab {
+position: fixed;
+bottom: calc(24px + env(safe-area-inset-bottom));
+right: 24px;
+width: 48px; height: 48px;
+border-radius: 4px;
+background: var(–accent);
+color: var(–bg-primary);
+border: none;
+font-size: 1.4rem;
+font-family: ‘JetBrains Mono’, monospace;
+display: flex; align-items: center; justify-content: center;
+cursor: pointer;
+box-shadow: var(–shadow-lg);
+transition: all var(–transition);
+z-index: 50;
+}
+.fab:hover { background: var(–accent-hover); transform: scale(1.05); }
+
+/* ─── Modal ─── */
+.modal-overlay {
+position: fixed; inset: 0;
+background: rgba(0,0,0,0.55);
+display: flex; align-items: flex-end; justify-content: center;
+z-index: 100;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.2s ease;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.modal {
+background: var(–bg-secondary);
+border: 1px solid var(–border-primary);
+border-radius: 4px 4px 0 0;
+padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+width: 100%;
+max-width: 500px;
+max-height: 85vh;
+overflow-y: auto;
+transform: translateY(100%);
+transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.modal-overlay.active .modal { transform: translateY(0); }
+
+@media (min-width: 600px) {
+.modal-overlay { align-items: center; }
+.modal { border-radius: var(–radius-lg); padding: 28px 24px; max-height: 80vh; }
+}
+
+.modal-handle { width: 36px; height: 4px; background: var(–border-primary); border-radius: 2px; margin: 0 auto 16px; }
+@media (min-width: 600px) { .modal-handle { display: none; } }
+.modal-title { font-size: 1rem; font-weight: 500; color: var(–text-primary); margin-bottom: 20px; text-align: center; letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* ─── Forms ─── */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-family: ‘JetBrains Mono’, monospace; font-size: 0.7rem; color: var(–text-tertiary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+
+.form-input, .form-textarea, .form-select {
+width: 100%; padding: 10px 14px;
+background: var(–bg-input);
+border: 1px solid var(–border-primary);
+border-radius: var(–radius);
+color: var(–text-primary);
+font-family: ‘JetBrains Mono’, ‘Courier New’, monospace; font-size: 0.85rem;
+transition: border-color var(–transition);
+outline: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(–accent); }
+.form-textarea { resize: vertical; min-height: 100px; line-height: 1.85; }
+.form-select {
+appearance: none; cursor: pointer;
+background-image: url(“data:image/svg+xml,%3Csvg width=‘10’ height=‘6’ viewBox=‘0 0 10 6’ fill=‘none’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cpath d=‘M1 1L5 5L9 1’ stroke=’%23444444’ stroke-width=‘1.5’ stroke-linecap=‘round’/%3E%3C/svg%3E”);
+background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+
+.form-input-group { display: flex; align-items: stretch; }
+.form-input-group .form-input { border-radius: var(–radius) 0 0 var(–radius); border-right: none; }
+.form-input-suffix { padding: 10px 12px; background: var(–bg-tertiary); border: 1px solid var(–border-primary); border-radius: 0 var(–radius) var(–radius) 0; color: var(–text-tertiary); font-size: 0.9rem; white-space: nowrap; display: flex; align-items: center; }
+
+.form-check { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px 0; }
+.form-check input[type=“checkbox”] { width: 18px; height: 18px; accent-color: var(–accent); cursor: pointer; flex-shrink: 0; }
+.form-check label { font-size: 0.9rem; color: var(–text-secondary); cursor: pointer; }
+
+/* ─── Buttons ─── */
+.btn-row { display: flex; gap: 10px; margin-top: 20px; }
+.btn { flex: 1; padding: 12px 16px; border-radius: var(–radius); font-family: ‘JetBrains Mono’, monospace; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all var(–transition); border: 1px solid transparent; letter-spacing: 0.05em; text-align: center; text-transform: uppercase; }
+.btn-primary { background: var(–accent); color: var(–bg-primary); border-color: var(–accent); }
+.btn-primary:hover { background: var(–accent-hover); }
+.btn-secondary { background: transparent; color: var(–text-secondary); border-color: var(–border-primary); }
+.btn-secondary:hover { background: var(–accent-soft); color: var(–text-primary); }
+.btn-danger { background: var(–danger-soft); color: var(–danger); border-color: transparent; }
+.btn-danger:hover { opacity: 0.85; }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+/* ─── Empty state ─── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(–text-tertiary); }
+.empty-state .enso { font-size: 4rem; opacity: 0.15; margin-bottom: 12px; font-family: ‘Noto Serif JP’, serif; }
+.empty-state p { font-size: 0.9rem; line-height: 1.6; }
+
+.confirm-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+/* ─── Alarms ─── */
+.alarms-section { margin-bottom: 24px; padding: 14px 16px; background: var(–accent-soft); border: 1px solid var(–accent); border-radius: 2px; }
+.alarms-title { font-family: ‘JetBrains Mono’, monospace; font-size: 0.7rem; color: var(–accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+.alarm-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.85rem; color: var(–text-primary); }
+.alarm-item-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alarm-item .alarm-date { color: var(–text-secondary); font-size: 0.8rem; white-space: nowrap; }
+.alarm-download { background: none; border: none; color: var(–accent); cursor: pointer; font-size: 0.85rem; padding: 4px 8px; transition: opacity var(–transition); white-space: nowrap; }
+.alarm-download:hover { opacity: 0.7; }
+
+/* ─── Toast ─── */
+.toast {
+position: fixed;
+bottom: calc(90px + env(safe-area-inset-bottom));
+left: 50%; transform: translateX(-50%) translateY(20px);
+background: var(–bg-tertiary);
+color: var(–text-primary);
+border: 1px solid var(–border-primary);
+padding: 10px 20px; border-radius: 2px;
+font-size: 0.85rem; z-index: 200;
+opacity: 0; transition: all 0.3s ease;
+pointer-events: none; white-space: nowrap;
+box-shadow: var(–shadow-lg);
+}
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.toast-success { border-color: var(–success); color: var(–success); }
+.toast.toast-error { border-color: var(–danger); color: var(–danger); }
+
+/* ─── Animations ─── */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeInUp 0.35s ease forwards; }
+
+/* ─── Watermark ─── */
+.watermark { position: fixed; bottom: -60px; right: -60px; font-size: 280px; font-family: ‘Noto Serif JP’, serif; color: var(–text-primary); opacity: 0.025; pointer-events: none; z-index: 0; line-height: 1; }
+
+/* ─── Icon picker ─── */
+.icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 6px; }
+.icon-option { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: var(–bg-input); border: 1px solid var(–border-subtle); border-radius: 2px; cursor: pointer; transition: all var(–transition); }
+.icon-option:hover, .icon-option.selected { border-color: var(–accent); background: var(–accent-soft); }
+
+/* ─── Import preview ─── */
+.import-preview { margin-top: 12px; padding: 12px 14px; background: var(–accent-soft); border-radius: var(–radius); font-size: 0.85rem; color: var(–text-secondary); }
+</style>
+
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title" onclick="goHome()">
+    <span class="kanji">日記</span>
+    <span class="romaji">Nikki</span>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="toggleTheme()" title="Tema">◐</button>
+    <button class="icon-btn" onclick="showExportModal()" title="Exportar">↑</button>
+    <button class="icon-btn" onclick="showImportModal()" title="Importar">↓</button>
+  </div>
+</header>
+
+<nav class="nav-tabs" id="navTabs" style="display:none"></nav>
+<main class="main-content" id="mainContent"></main>
+<button class="fab" id="fab" onclick="onFabClick()">＋</button>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="watermark">円</div>
+
+<script>
+/* ═══════════════════════════════════════
+   CONSTANTS & STATE
+   ═══════════════════════════════════════ */
+const STORAGE_KEY = 'nikki_data';
+const THEME_KEY = 'nikki_theme';
+const FILENAME_KEY = 'nikki_filename';
+const DEFAULT_ICONS = ['📝','📖','💭','🎯','🏃','🍵','🎨','✦','🌿','📸','🎵','💡','🏠','💰','❤️','⭐','🌊','🔥','📚','🧘','🧠','🍳','✈️','🎮'];
+
+let state = { topics: [] };
+let currentView = 'home';
+let currentTopicId = null;
+let currentSubFilter = null;
+let currentEntryId = null;
+let _toastTimer = null;
+
+/* ═══════════════════════════════════════
+   PERSISTENCE
+   ═══════════════════════════════════════ */
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (d && d.topics) {
+      state = d;
+      state.topics.forEach(t => {
+        if (!t.entries) t.entries = [];
+        if (!t.subsections) t.subsections = [];
+        t.entries.forEach(e => { if (!e.topicId) e.topicId = t.id; });
+      });
+    }
+  } catch(e) {}
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function getTopic(id) { return state.topics.find(t => t.id === id); }
+
+function getEntries(topicId, sub) {
+  const t = getTopic(topicId);
+  if (!t) return [];
+  let entries = t.entries || [];
+  if (sub) entries = entries.filter(e => e.subsection === sub);
+  return entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+function getSavedFilename() { return localStorage.getItem(FILENAME_KEY) || 'nikki-backup'; }
+function setSavedFilename(n) { localStorage.setItem(FILENAME_KEY, n); }
+
+/* ═══════════════════════════════════════
+   THEME
+   ═══════════════════════════════════════ */
+function getTheme() { return localStorage.getItem(THEME_KEY) || 'chashitsu'; }
+
+function initTheme() {
+  const t = getTheme();
+  document.documentElement.setAttribute('data-theme', t === 'washi' ? 'washi' : '');
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = t === 'washi' ? '#0a0a0a' : '#ffffff';
+}
+
+function toggleTheme() {
+  localStorage.setItem(THEME_KEY, getTheme() === 'chashitsu' ? 'washi' : 'chashitsu');
+  initTheme();
+}
+
+/* ═══════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════ */
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type ? ' toast-' + type : '');
+  clearTimeout(_toastTimer);
+  requestAnimationFrame(() => {
+    el.classList.add('visible');
+    _toastTimer = setTimeout(() => el.classList.remove('visible'), 2200);
+  });
+}
+
+/* ═══════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════ */
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function escAttr(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatDateTime(dt) {
+  const d = new Date(dt);
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ' ' +
+    d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+
+function toDatetimeLocal(v) {
+  if (!v) return '';
+  // If already in YYYY-MM-DDTHH:MM format, return as-is
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) return v.slice(0, 16);
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return '';
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+/* ═══════════════════════════════════════
+   RENDERING
+   ═══════════════════════════════════════ */
+const $main = document.getElementById('mainContent');
+const $nav = document.getElementById('navTabs');
+const $fab = document.getElementById('fab');
+
+function render() {
+  if (currentView === 'home') renderHome();
+  else if (currentView === 'topic') renderTopic();
+  else if (currentView === 'entry') renderEntry();
+}
+
+function renderHome() {
+  $nav.style.display = 'none';
+  $fab.style.display = '';
+
+  if (state.topics.length === 0) {
+    $main.innerHTML = '<div class="empty-state"><div class="enso">◯</div><p>Tu diario está vacío.<br>Toca <strong>＋</strong> para crear un tema.</p></div>';
+    return;
+  }
+
+  let html = '<div class="topics-grid">';
+  state.topics.forEach((t, i) => {
+    const count = (t.entries || []).length;
+    const alarms = (t.entries || []).filter(e => e.alarm && new Date(e.alarm.datetime) > new Date()).length;
+    html += '<div class="topic-card animate-in" style="animation-delay:' + (i * 0.03) + 's" data-id="' + escAttr(t.id) + '" onclick="openTopic(this.dataset.id)">' +
+      '<div class="topic-icon">' + t.icon + '</div>' +
+      '<div class="topic-info"><div class="topic-name">' + esc(t.name) + '</div>' +
+      '<div class="topic-meta">' + t.subsections.length + ' sub' + (t.subsections.length !== 1 ? 's' : '') +
+      (alarms > 0 ? '<span class="topic-alarm-badge">⏰ ' + alarms + '</span>' : '') +
+      '</div></div>' +
+      '<div class="topic-count">' + count + '</div></div>';
+  });
+  html += '</div>';
+  $main.innerHTML = html;
+}
+
+function renderTopic() {
+  const t = getTopic(currentTopicId);
+  if (!t) { goHome(); return; }
+
+  $nav.style.display = 'flex';
+  $fab.style.display = '';
+
+  // Tabs
+  const allCount = (t.entries || []).length;
+  let tabs = '<button class="nav-tab ' + (!currentSubFilter ? 'active' : '') + '" onclick="filterSub(null)">Todo<span class="tab-count">' + allCount + '</span></button>';
+  t.subsections.forEach(s => {
+    const c = (t.entries || []).filter(e => e.subsection === s).length;
+    tabs += '<button class="nav-tab ' + (currentSubFilter === s ? 'active' : '') + '" data-sub="' + escAttr(s) + '" onclick="filterSub(this.dataset.sub)">' + esc(s) + '<span class="tab-count">' + c + '</span></button>';
+  });
+  tabs += '<button class="nav-tab" onclick="showAddSubsection()" style="color:var(--accent)">+ Sub</button>';
+  $nav.innerHTML = tabs;
+
+  const entries = getEntries(currentTopicId, currentSubFilter);
+
+  let html = '<div class="view-header">' +
+    '<button class="back-btn" onclick="goHome()">←</button>' +
+    '<span class="view-title">' + t.icon + ' ' + esc(t.name) + '</span>' +
+    '<button class="icon-btn btn-sm" data-id="' + escAttr(t.id) + '" onclick="showTopicModal(this.dataset.id)" title="Editar">✎</button>' +
+    '<button class="icon-btn btn-sm" data-id="' + escAttr(t.id) + '" onclick="confirmDeleteTopic(this.dataset.id)" title="Eliminar" style="color:var(--danger)">✕</button>' +
+    '</div>';
+
+  // Pending alarms
+  const alarmed = (t.entries || []).filter(e => e.alarm && new Date(e.alarm.datetime) > new Date());
+  if (alarmed.length > 0) {
+    alarmed.sort((a, b) => new Date(a.alarm.datetime) - new Date(b.alarm.datetime));
+    html += '<div class="alarms-section"><div class="alarms-title">⏰ Recordatorios pendientes</div>';
+    alarmed.forEach(e => {
+      html += '<div class="alarm-item">' +
+        '<span class="alarm-item-text">' + esc(e.alarm.note || e.text.slice(0, 40)) + '</span>' +
+        '<span class="alarm-date">' + formatDateTime(e.alarm.datetime) + '</span>' +
+        '<button class="alarm-download" data-entry="' + escAttr(e.id) + '" data-topic="' + escAttr(t.id) + '" onclick="dlICS(this)">📅</button>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (entries.length === 0) {
+    html += '<div class="empty-state"><div class="enso">◯</div><p>Sin anotaciones' + (currentSubFilter ? ' en «' + esc(currentSubFilter) + '»' : '') + '.<br>Toca <strong>＋</strong> para escribir.</p></div>';
+  } else if (currentSubFilter) {
+    entries.forEach((e, i) => { html += entryCardHTML(e, i); });
+  } else {
+    const groups = {};
+    entries.forEach(e => { const k = e.subsection || '—'; if (!groups[k]) groups[k] = []; groups[k].push(e); });
+    const subs = t.subsections.filter(s => groups[s]);
+    if (groups['—']) subs.push('—');
+    let idx = 0;
+    subs.forEach(s => {
+      html += '<div class="subsection-group"><div class="subsection-header"><span class="subsection-name">' + (s === '—' ? 'General' : esc(s)) + '</span></div>';
+      groups[s].forEach(e => { html += entryCardHTML(e, idx++); });
+      html += '</div>';
+    });
+  }
+
+  $main.innerHTML = html;
+}
+
+function entryCardHTML(e, i) {
+  const delay = Math.min((i || 0) * 0.03, 0.3);
+  return '<div class="entry-card animate-in" style="animation-delay:' + delay + 's" data-entry="' + escAttr(e.id) + '" data-topic="' + escAttr(e.topicId) + '" onclick="openEntry(this.dataset.topic,this.dataset.entry)">' +
+    '<div class="entry-date">' + formatDate(e.date) + (e.subsection ? ' · ' + esc(e.subsection) : '') + '</div>' +
+    '<div class="entry-text">' + esc(e.text.length > 200 ? e.text.slice(0, 200) + '…' : e.text) + '</div>' +
+    (e.alarm ? '<div class="entry-alarm">⏰ ' + formatDateTime(e.alarm.datetime) + '</div>' : '') +
+    '</div>';
+}
+
+function renderEntry() {
+  const t = getTopic(currentTopicId);
+  const e = t ? (t.entries || []).find(x => x.id === currentEntryId) : null;
+  if (!t || !e) { openTopic(currentTopicId); return; }
+
+  $nav.style.display = 'none';
+  $fab.style.display = 'none';
+
+  let html = '<div class="view-header">' +
+    '<button class="back-btn" data-id="' + escAttr(t.id) + '" onclick="openTopic(this.dataset.id)">←</button>' +
+    '<span class="view-title">' + (e.subsection ? esc(e.subsection) : 'Anotación') + '</span></div>' +
+    '<div class="entry-detail-meta">' + formatDate(e.date) + ' · ' + t.icon + ' ' + esc(t.name) + '</div>' +
+    '<div class="entry-detail-text">' + esc(e.text) + '</div>';
+
+  if (e.alarm) {
+    html += '<div class="entry-alarm" style="margin-bottom:12px">⏰ ' + formatDateTime(e.alarm.datetime) +
+      (e.alarm.note ? ' — ' + esc(e.alarm.note) : '') +
+      ' <button class="alarm-download" data-entry="' + escAttr(e.id) + '" data-topic="' + escAttr(t.id) + '" onclick="dlICS(this)" style="margin-left:8px">📅 Exportar .ics</button></div>';
+  }
+
+  html += '<div class="entry-actions">' +
+    '<button class="btn btn-secondary btn-sm" data-topic="' + escAttr(t.id) + '" data-entry="' + escAttr(e.id) + '" onclick="showEntryModal(this.dataset.topic,this.dataset.entry)">Editar</button>' +
+    '<button class="btn btn-danger btn-sm" data-topic="' + escAttr(t.id) + '" data-entry="' + escAttr(e.id) + '" onclick="confirmDeleteEntry(this.dataset.topic,this.dataset.entry)">Eliminar</button>' +
+    '</div>';
+
+  $main.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════ */
+function goHome() { currentView = 'home'; currentTopicId = null; currentSubFilter = null; currentEntryId = null; render(); }
+
+function openTopic(id) { currentView = 'topic'; currentTopicId = id; currentSubFilter = null; currentEntryId = null; render(); $main.scrollTop = 0; }
+
+function openEntry(topicId, entryId) { currentView = 'entry'; currentTopicId = topicId; currentEntryId = entryId; render(); $main.scrollTop = 0; }
+
+function filterSub(sub) { currentSubFilter = sub || null; render(); }
+
+function onFabClick() {
+  if (currentView === 'home') showTopicModal();
+  else if (currentView === 'topic') showEntryModal(currentTopicId);
+}
+
+/* ═══════════════════════════════════════
+   MODALS
+   ═══════════════════════════════════════ */
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = '<div class="modal-handle"></div>' + html;
+  requestAnimationFrame(() => document.getElementById('modalOverlay').classList.add('active'));
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+/* ── Topic modal ── */
+function showTopicModal(editId) {
+  const t = editId ? getTopic(editId) : null;
+  const name = t ? t.name : '';
+  const icon = t ? t.icon : '📝';
+  const subs = t ? t.subsections.join(', ') : '';
+
+  openModal(
+    '<div class="modal-title">' + (t ? 'Editar' : 'Nuevo') + ' tema</div>' +
+    '<div class="form-group"><label class="form-label">Nombre</label>' +
+    '<input class="form-input" id="fTopicName" value="' + escAttr(name) + '" placeholder="Ej: Salud, Trabajo, Ideas…"></div>' +
+    '<div class="form-group"><label class="form-label">Icono</label>' +
+    '<div class="icon-grid" id="iconGrid">' +
+    DEFAULT_ICONS.map(ic => '<div class="icon-option ' + (ic === icon ? 'selected' : '') + '" onclick="selIcon(this,\'' + ic + '\')">' + ic + '</div>').join('') +
+    '</div><input type="hidden" id="fTopicIcon" value="' + escAttr(icon) + '"></div>' +
+    '<div class="form-group"><label class="form-label">Subsecciones (separadas por coma)</label>' +
+    '<input class="form-input" id="fTopicSubs" value="' + escAttr(subs) + '" placeholder="Ej: Dieta, Ejercicio, Sueño"></div>' +
+    '<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>' +
+    '<button class="btn btn-primary" id="btnSaveTopic">' + (t ? 'Guardar' : 'Crear') + '</button></div>'
+  );
+  setTimeout(() => {
+    document.getElementById('fTopicName').focus();
+    document.getElementById('btnSaveTopic').addEventListener('click', () => saveTopic(editId || ''));
+    document.getElementById('fTopicName').addEventListener('keydown', e => { if (e.key === 'Enter') saveTopic(editId || ''); });
+  }, 350);
+}
+
+function selIcon(el, ic) {
+  document.querySelectorAll('#iconGrid .icon-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('fTopicIcon').value = ic;
+}
+
+function saveTopic(editId) {
+  const name = document.getElementById('fTopicName').value.trim();
+  if (!name) { toast('Escribe un nombre', 'error'); return; }
+  const icon = document.getElementById('fTopicIcon').value;
+  const subs = document.getElementById('fTopicSubs').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  if (editId) {
+    const t = getTopic(editId);
+    if (t) { t.name = name; t.icon = icon; t.subsections = [...new Set(subs)]; }
+  } else {
+    state.topics.push({ id: genId(), name, icon, subsections: subs, entries: [] });
+  }
+  save(); closeModal();
+  toast(editId ? 'Tema actualizado' : 'Tema creado', 'success');
+  if (editId && currentView === 'topic') renderTopic(); else render();
+}
+
+/* ── Entry modal ── */
+function showEntryModal(topicId, editId) {
+  const t = getTopic(topicId);
+  if (!t) return;
+  const e = editId ? (t.entries || []).find(x => x.id === editId) : null;
+
+  const text = e ? e.text : '';
+  const sub = e ? (e.subsection || '') : (currentSubFilter || '');
+  const hasAlarm = !!(e && e.alarm);
+  const alarmDT = hasAlarm ? toDatetimeLocal(e.alarm.datetime) : '';
+  const alarmNote = hasAlarm ? (e.alarm.note || '') : '';
+
+  openModal(
+    '<div class="modal-title">' + (e ? 'Editar' : 'Nueva') + ' anotación</div>' +
+    '<div class="form-group"><label class="form-label">Subsección</label>' +
+    '<select class="form-select" id="fEntrySub"><option value="">— General —</option>' +
+    t.subsections.map(s => '<option value="' + escAttr(s) + '"' + (s === sub ? ' selected' : '') + '>' + esc(s) + '</option>').join('') +
+    '</select></div>' +
+    '<div class="form-group"><label class="form-label">Texto</label>' +
+    '<textarea class="form-textarea" id="fEntryText" rows="5" placeholder="Escribe aquí…">' + esc(text) + '</textarea></div>' +
+
+```
+'<div class="form-check"><input type="checkbox" id="fAlarmCheck" ' + (hasAlarm ? 'checked' : '') + ' onchange="toggleAlarm()">' +
+'<label for="fAlarmCheck">⏰ Añadir recordatorio</label></div>' +
+'<div id="alarmFields" style="display:' + (hasAlarm ? 'block' : 'none') + '">' +
+'<div class="form-group"><label class="form-label">Fecha y hora</label>' +
+'<input type="datetime-local" class="form-input" id="fAlarmDT" value="' + escAttr(alarmDT) + '"></div>' +
+'<div class="form-group"><label class="form-label">Nota del recordatorio</label>' +
+'<input class="form-input" id="fAlarmNote" value="' + escAttr(alarmNote) + '" placeholder="Opcional"></div></div>' +
+'<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>' +
+'<button class="btn btn-primary" id="btnSaveEntry">' + (e ? 'Guardar' : 'Añadir') + '</button></div>'
+```
+
+);
+setTimeout(() => {
+document.getElementById(‘btnSaveEntry’).addEventListener(‘click’, () => saveEntry(topicId, editId || ‘’));
+document.getElementById(‘fEntryText’).focus();
+}, 100);
+}
+
+function toggleAlarm() {
+const show = document.getElementById(‘fAlarmCheck’).checked;
+document.getElementById(‘alarmFields’).style.display = show ? ‘block’ : ‘none’;
+if (show) {
+const dt = document.getElementById(‘fAlarmDT’);
+if (dt && !dt.value) {
+const tom = new Date();
+tom.setDate(tom.getDate() + 1);
+tom.setHours(9, 0, 0, 0);
+dt.value = toDatetimeLocal(tom);
+}
+}
+}
+
+function saveEntry(topicId, editId) {
+const t = getTopic(topicId);
+if (!t) return;
+const text = document.getElementById(‘fEntryText’).value.trim();
+if (!text) { toast(‘Escribe algo’, ‘error’); return; }
+const sub = document.getElementById(‘fEntrySub’).value;
+const hasAlarm = document.getElementById(‘fAlarmCheck’).checked;
+let alarm = null;
+
+if (hasAlarm) {
+const dt = document.getElementById(‘fAlarmDT’).value;
+if (!dt) { toast(‘Selecciona fecha y hora’, ‘error’); return; }
+alarm = { datetime: dt, note: document.getElementById(‘fAlarmNote’).value.trim() };
+}
+
+if (editId) {
+const e = (t.entries || []).find(x => x.id === editId);
+if (e) { e.text = text; e.subsection = sub; e.alarm = alarm; }
+} else {
+if (!t.entries) t.entries = [];
+t.entries.push({ id: genId(), topicId, subsection: sub, text, date: new Date().toISOString(), alarm });
+}
+save(); closeModal();
+toast(editId ? ‘Anotación guardada’ : ‘Anotación añadida’, ‘success’);
+
+// Auto-download ICS after creating alarm
+if (hasAlarm && alarm) {
+setTimeout(() => {
+const eid = editId || t.entries[t.entries.length - 1].id;
+downloadICS(eid, topicId);
+}, 500);
+}
+
+if (currentView === ‘entry’ && editId) renderEntry();
+else renderTopic();
+}
+
+/* ── Add subsection ── */
+function showAddSubsection() {
+openModal(
+‘<div class="modal-title">Nueva subsección</div>’ +
+‘<div class="form-group"><label class="form-label">Nombre</label>’ +
+‘<input class="form-input" id="fNewSub" placeholder="Ej: Reflexiones"></div>’ +
+‘<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>’ +
+‘<button class="btn btn-primary" id="btnAddSub">Añadir</button></div>’
+);
+setTimeout(() => {
+document.getElementById(‘fNewSub’).focus();
+document.getElementById(‘btnAddSub’).addEventListener(‘click’, addSub);
+document.getElementById(‘fNewSub’).addEventListener(‘keydown’, e => { if (e.key === ‘Enter’) addSub(); });
+}, 100);
+}
+
+function addSub() {
+const name = document.getElementById(‘fNewSub’).value.trim();
+if (!name) { toast(‘Escribe un nombre’, ‘error’); return; }
+const t = getTopic(currentTopicId);
+if (!t) return;
+if (t.subsections.includes(name)) { toast(‘Ya existe’, ‘error’); return; }
+t.subsections.push(name);
+save(); closeModal();
+toast(‘Subsección añadida’, ‘success’);
+renderTopic();
+}
+
+/* ── Deletes ── */
+function confirmDeleteTopic(id) {
+const t = getTopic(id);
+if (!t) return;
+openModal(
+‘<div class="modal-title">¿Eliminar «’ + esc(t.name) + ‘»?</div>’ +
+‘<p style="text-align:center;color:var(--text-secondary);font-size:0.9rem;margin-bottom:8px;">’ +
+‘Se borrarán ’ + (t.entries || []).length + ’ anotaciones.</p>’ +
+‘<div class="confirm-actions">’ +
+‘<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>’ +
+‘<button class="btn btn-danger" data-id="' + escAttr(id) + '" onclick="deleteTopic(this.dataset.id)">Eliminar</button></div>’
+);
+}
+
+function deleteTopic(id) {
+state.topics = state.topics.filter(t => t.id !== id);
+save(); closeModal(); toast(‘Tema eliminado’); goHome();
+}
+
+function confirmDeleteEntry(topicId, entryId) {
+openModal(
+‘<div class="modal-title">¿Eliminar esta anotación?</div>’ +
+‘<div class="confirm-actions">’ +
+‘<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>’ +
+‘<button class="btn btn-danger" data-topic="' + escAttr(topicId) + '" data-entry="' + escAttr(entryId) + '" onclick="deleteEntry(this.dataset.topic,this.dataset.entry)">Eliminar</button></div>’
+);
+}
+
+function deleteEntry(topicId, entryId) {
+const t = getTopic(topicId);
+if (t) t.entries = (t.entries || []).filter(e => e.id !== entryId);
+save(); closeModal(); toast(‘Anotación eliminada’); openTopic(topicId);
+}
+
+/* ═══════════════════════════════════════
+ICS CALENDAR
+═══════════════════════════════════════ */
+function dlICS(el) { downloadICS(el.dataset.entry, el.dataset.topic); }
+
+function downloadICS(entryId, topicId) {
+const t = getTopic(topicId);
+if (!t) return;
+const e = (t.entries || []).find(x => x.id === entryId);
+if (!e || !e.alarm) return;
+
+const dt = new Date(e.alarm.datetime);
+if (isNaN(dt.getTime())) { toast(‘Fecha no válida’, ‘error’); return; }
+
+const p = n => String(n).padStart(2, ‘0’);
+const fmt = d => d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + ‘T’ + p(d.getHours()) + p(d.getMinutes()) + ‘00’;
+const end = new Date(dt.getTime() + 30 * 60000);
+const summary = (e.alarm.note || ’日記: ’ + t.name).replace(/[\r\n,;\]/g, ’ ’);
+const desc = e.text.slice(0, 200).replace(/\r?\n/g, ‘\n’).replace(/[,;]/g, ’ ’);
+
+const ics = ‘BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Nikki//Diario//ES\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nBEGIN:VEVENT\r\nDTSTART:’ + fmt(dt) + ‘\r\nDTEND:’ + fmt(end) + ‘\r\nSUMMARY:’ + summary + ‘\r\nDESCRIPTION:’ + desc + ‘\r\nBEGIN:VALARM\r\nTRIGGER:-PT15M\r\nACTION:DISPLAY\r\nDESCRIPTION:’ + summary + ‘\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:PT0S\r\nACTION:DISPLAY\r\nDESCRIPTION:’ + summary + ‘\r\nEND:VALARM\r\nUID:’ + entryId + ‘@nikki.app\r\nDTSTAMP:’ + fmt(new Date()) + ‘\r\nSTATUS:CONFIRMED\r\nEND:VEVENT\r\nEND:VCALENDAR’;
+
+if (isIOS) {
+// iOS: data URI + window.open works reliably
+window.open(‘data:text/calendar;charset=utf-8,’ + encodeURIComponent(ics));
+} else {
+const blob = new Blob([ics], { type: ‘text/calendar;charset=utf-8’ });
+const a = document.createElement(‘a’);
+a.href = URL.createObjectURL(blob);
+a.download = ‘nikki-’ + entryId.slice(0, 8) + ‘.ics’;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+}
+toast(‘Calendario exportado’, ‘success’);
+}
+
+/* ═══════════════════════════════════════
+EXPORT
+═══════════════════════════════════════ */
+function showExportModal() {
+const saved = getSavedFilename();
+const tc = state.topics.length;
+const ec = state.topics.reduce((n, t) => (t.entries || []).length + n, 0);
+
+openModal(
+‘<div class="modal-title">Exportar datos</div>’ +
+‘<div class="form-group"><label class="form-label">Nombre del archivo</label>’ +
+‘<div class="form-input-group"><input class="form-input" id="fExportName" value="' + escAttr(saved) + '" placeholder="nikki-backup">’ +
+‘<span class="form-input-suffix">.json</span></div></div>’ +
+‘<div class="form-check"><input type="checkbox" id="fRememberName" checked>’ +
+‘<label for="fRememberName">Recordar este nombre</label></div>’ +
+‘<p style="color:var(--text-tertiary);font-size:0.8rem;text-align:center;margin-top:4px;">’ +
+tc + ’ tema’ + (tc !== 1 ? ‘s’ : ‘’) + ’ · ’ + ec + ’ anotación’ + (ec !== 1 ? ‘es’ : ‘’) + ‘</p>’ +
+‘<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>’ +
+‘<button class="btn btn-primary" id="btnExport">Exportar</button></div>’
+);
+setTimeout(() => {
+const inp = document.getElementById(‘fExportName’);
+inp.focus(); inp.select();
+document.getElementById(‘btnExport’).addEventListener(‘click’, doExport);
+inp.addEventListener(‘keydown’, e => { if (e.key === ‘Enter’) doExport(); });
+}, 350);
+}
+
+function doExport() {
+let name = (document.getElementById(‘fExportName’).value || ‘’).trim();
+if (!name) name = ‘nikki-backup’;
+name = name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑü_-\s]/g, ‘’).replace(/\s+/g, ‘-’);
+if (!name) name = ‘nikki-backup’;
+
+if (document.getElementById(‘fRememberName’).checked) setSavedFilename(name);
+
+const filename = name + ‘.json’;
+const json = JSON.stringify(state, null, 2);
+closeModal();
+
+// Try Web Share first (best on iOS)
+if (navigator.canShare) {
+try {
+const file = new File([json], filename, { type: ‘application/json’ });
+if (navigator.canShare({ files: [file] })) {
+navigator.share({ files: [file], title: ‘日記 Backup’ }).then(() => {
+toast(‘Exportado’, ‘success’);
+}).catch(() => dlFile(json, filename));
+return;
+}
+} catch(e) {}
+}
+dlFile(json, filename);
+}
+
+function dlFile(json, filename) {
+if (isIOS) {
+window.open(‘data:application/json;charset=utf-8,’ + encodeURIComponent(json));
+toast(‘Archivo abierto — guárdalo desde el menú’, ‘success’);
+} else {
+const blob = new Blob([json], { type: ‘application/json’ });
+const a = document.createElement(‘a’);
+a.href = URL.createObjectURL(blob);
+a.download = filename;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+toast(‘Archivo descargado’, ‘success’);
+}
+}
+
+/* ═══════════════════════════════════════
+IMPORT
+═══════════════════════════════════════ */
+function showImportModal() {
+openModal(
+‘<div class="modal-title">Importar datos</div>’ +
+‘<p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;margin-bottom:16px;">Selecciona un archivo .json de Nikki</p>’ +
+‘<input type="file" accept=".json,application/json" id="fImportFile" class="form-input">’ +
+‘<div id="importPreview" class="import-preview" style="display:none"></div>’ +
+‘<div class="btn-row"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>’ +
+‘<button class="btn btn-primary" id="btnImport" style="display:none">Importar</button></div>’
+);
+setTimeout(() => {
+document.getElementById(‘fImportFile’).addEventListener(‘change’, handleImportFile);
+}, 100);
+}
+
+function handleImportFile(evt) {
+const file = evt.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(ev) {
+const $p = document.getElementById(‘importPreview’);
+const $b = document.getElementById(‘btnImport’);
+try {
+const d = JSON.parse(ev.target.result);
+if (!d.topics || !Array.isArray(d.topics)) throw new Error();
+const ec = d.topics.reduce((n, t) => (t.entries || []).length + n, 0);
+const ac = d.topics.reduce((n, t) => (t.entries || []).filter(e => e.alarm).length + n, 0);
+
+```
+  $p.style.display = 'block';
+  let info = '<strong>' + esc(file.name) + '</strong><br>' +
+    d.topics.length + ' tema' + (d.topics.length !== 1 ? 's' : '') + ' · ' + ec + ' anotación' + (ec !== 1 ? 'es' : '') +
+    (ac > 0 ? ' · ' + ac + ' alarma' + (ac !== 1 ? 's' : '') : '');
+
+  const baseName = file.name.replace(/\.json$/i, '');
+  if (baseName && baseName !== getSavedFilename()) {
+    info += '<div class="form-check" style="padding:6px 0 0"><input type="checkbox" id="fAdoptName" checked>' +
+      '<label for="fAdoptName">Usar «' + esc(baseName) + '» como nombre de exportación</label></div>';
+  }
+  if (state.topics.length > 0) {
+    info += '<p style="color:var(--danger);font-size:0.8rem;margin-top:8px;">⚠ Esto reemplazará tus ' + state.topics.length + ' temas actuales</p>';
+  }
+  $p.innerHTML = info;
+  $b.style.display = '';
+  window._importData = d;
+  window._importFileName = file.name;
+  $b.onclick = doImport;
+} catch(err) {
+  $p.style.display = 'block';
+  $p.innerHTML = '<span style="color:var(--danger)">Archivo no válido.</span>';
+  $b.style.display = 'none';
+  window._importData = null;
+}
+```
+
+};
+reader.readAsText(file);
+}
+
+function doImport() {
+const d = window._importData;
+if (!d || !d.topics) return;
+
+const $a = document.getElementById(‘fAdoptName’);
+if ($a && $a.checked && window._importFileName) {
+const b = window._importFileName.replace(/.json$/i, ‘’);
+if (b) setSavedFilename(b);
+}
+
+d.topics.forEach(t => {
+if (!t.id) t.id = genId();
+if (!t.entries) t.entries = [];
+if (!t.subsections) t.subsections = [];
+t.entries.forEach(e => {
+if (!e.id) e.id = genId();
+if (!e.topicId) e.topicId = t.id;
+});
+});
+
+state = d;
+save();
+window._importData = null;
+window._importFileName = null;
+closeModal();
+toast(‘Datos importados’, ‘success’);
+goHome();
+}
+
+/* ═══════════════════════════════════════
+INIT
+═══════════════════════════════════════ */
+initTheme();
+load();
+render();
+</script>
+
+</body>
+</html>
