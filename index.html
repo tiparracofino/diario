@@ -209,7 +209,6 @@ body {
 .topic-info { flex: 1; min-width: 0; }
 .topic-name { font-size: 1rem; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; letter-spacing: 0.02em; }
 .topic-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-tertiary); letter-spacing: 0.05em; }
-.topic-alarm-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.7rem; color: var(--accent); margin-left: 8px; }
 .topic-count { font-family: 'JetBrains Mono', monospace; font-size: 1.3rem; font-weight: 300; color: var(--text-tertiary); padding-right: 4px; }
 
 /* ─── View header ─── */
@@ -237,7 +236,6 @@ body {
 .entry-card:hover { background: var(--bg-card-hover); border-color: var(--border-primary); }
 .entry-date { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-tertiary); margin-bottom: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
 .entry-text { font-size: 0.9rem; color: var(--text-primary); line-height: 1.85; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.02em; }
-.entry-alarm { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 2px; letter-spacing: 0.05em; }
 
 /* ─── Entry detail ─── */
 .entry-detail-text { font-size: 1rem; line-height: 2; color: var(--text-primary); white-space: pre-wrap; word-break: break-word; padding: 16px 0; letter-spacing: 0.02em; }
@@ -347,13 +345,6 @@ body {
 
 .confirm-actions { display: flex; gap: 10px; margin-top: 16px; }
 
-/* ─── Alarms ─── */
-.alarms-section { margin-bottom: 24px; padding: 14px 16px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 2px; }
-.alarms-title { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
-.alarm-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.85rem; color: var(--text-primary); }
-.alarm-item-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.alarm-item .alarm-date { color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap; }
-
 /* ─── Toast ─── */
 .toast {
   position: fixed;
@@ -420,7 +411,6 @@ body {
    ═══════════════════════════════════════ */
 const STORAGE_KEY = 'nikki_data';
 const THEME_KEY = 'nikki_theme';
-const FILENAME_KEY = 'nikki_filename';
 const DEFAULT_ICONS = ['📝','📖','💭','🎯','🏃','🍵','🎨','✦','🌿','📸','🎵','💡','🏠','💰','❤️','⭐','🌊','🔥','📚','🧘','🧠','🍳','✈️','🎮'];
 
 let state = { topics: [] };
@@ -463,9 +453,6 @@ function getEntries(topicId, sub) {
     return (isNaN(d2) ? 0 : d2) - (isNaN(d1) ? 0 : d1);
   });
 }
-
-function getSavedFilename() { return localStorage.getItem(FILENAME_KEY) || 'nikki-backup'; }
-function setSavedFilename(n) { localStorage.setItem(FILENAME_KEY, n); }
 
 /* ═══════════════════════════════════════
    THEME
@@ -518,13 +505,6 @@ function formatDate(iso) {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function formatDateTime(dt) {
-  const d = new Date(dt);
-  if(isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ' ' +
-    d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-}
-
 function toDatetimeLocal(v) {
   if (!v) return '';
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) return v.slice(0, 16);
@@ -559,12 +539,10 @@ function renderHome() {
   let html = '<div class="topics-grid">';
   state.topics.forEach((t, i) => {
     const count = (t.entries || []).length;
-    const alarms = (t.entries || []).filter(e => e.alarm && new Date(e.alarm.datetime) > new Date()).length;
     html += '<div class="topic-card animate-in" style="animation-delay:' + (i * 0.03) + 's" data-id="' + escAttr(t.id) + '" onclick="openTopic(this.dataset.id)">' +
       '<div class="topic-icon">' + t.icon + '</div>' +
       '<div class="topic-info"><div class="topic-name">' + esc(t.name) + '</div>' +
       '<div class="topic-meta">' + t.subsections.length + ' sub' + (t.subsections.length !== 1 ? 's' : '') +
-      (alarms > 0 ? '<span class="topic-alarm-badge">⏰ ' + alarms + '</span>' : '') +
       '</div></div>' +
       '<div class="topic-count">' + count + '</div></div>';
   });
@@ -597,19 +575,6 @@ function renderTopic() {
     '<button type="button" class="icon-btn btn-sm" data-id="' + escAttr(t.id) + '" onclick="confirmDeleteTopic(this.dataset.id)" title="Eliminar" style="color:var(--danger)">✕</button>' +
     '</div>';
 
-  const alarmed = (t.entries || []).filter(e => e.alarm && new Date(e.alarm.datetime) > new Date());
-  if (alarmed.length > 0) {
-    alarmed.sort((a, b) => new Date(a.alarm.datetime) - new Date(b.alarm.datetime));
-    html += '<div class="alarms-section"><div class="alarms-title">⏰ Recordatorios pendientes</div>';
-    alarmed.forEach(e => {
-      html += '<div class="alarm-item">' +
-        '<span class="alarm-item-text">' + esc(e.alarm.note || e.text.slice(0, 40)) + '</span>' +
-        '<span class="alarm-date">' + formatDateTime(e.alarm.datetime) + '</span>' +
-        '</div>';
-    });
-    html += '</div>';
-  }
-
   if (entries.length === 0) {
     html += '<div class="empty-state"><div class="enso">◯</div><p>Sin anotaciones' + (currentSubFilter ? ' en «' + esc(currentSubFilter) + '»' : '') + '.<br>Toca <strong>＋</strong> para escribir.</p></div>';
   } else if (currentSubFilter) {
@@ -638,7 +603,6 @@ function entryCardHTML(e, i) {
   return '<div class="entry-card animate-in" style="animation-delay:' + delay + 's" data-entry="' + escAttr(e.id) + '" data-topic="' + escAttr(e.topicId) + '" onclick="openEntry(this.dataset.topic,this.dataset.entry)">' +
     '<div class="entry-date">' + formatDate(e.date) + (e.subsection ? ' · ' + esc(e.subsection) : '') + '</div>' +
     '<div class="entry-text">' + esc(e.text.length > 200 ? e.text.slice(0, 200) + '…' : e.text) + '</div>' +
-    (e.alarm ? '<div class="entry-alarm">⏰ ' + formatDateTime(e.alarm.datetime) + '</div>' : '') +
     '</div>';
 }
 
@@ -655,11 +619,6 @@ function renderEntry() {
     '<span class="view-title">' + (e.subsection ? esc(e.subsection) : 'Anotación') + '</span></div>' +
     '<div class="entry-detail-meta">' + formatDate(e.date) + ' · ' + t.icon + ' ' + esc(t.name) + '</div>' +
     '<div class="entry-detail-text">' + esc(e.text) + '</div>';
-
-  if (e.alarm) {
-    html += '<div class="entry-alarm" style="margin-bottom:12px">⏰ ' + formatDateTime(e.alarm.datetime) +
-      (e.alarm.note ? ' — ' + esc(e.alarm.note) : '') + '</div>';
-  }
 
   html += '<div class="entry-actions">' +
     '<button type="button" class="btn btn-secondary btn-sm" data-topic="' + escAttr(t.id) + '" data-entry="' + escAttr(e.id) + '" onclick="showEntryModal(this.dataset.topic,this.dataset.entry)">Editar</button>' +
@@ -775,25 +734,18 @@ function showEntryModal(topicId, editId) {
 
   const text = e ? e.text : '';
   const sub = e ? (e.subsection || '') : (currentSubFilter || '');
-  const hasAlarm = !!(e && e.alarm);
-  const alarmDT = hasAlarm ? toDatetimeLocal(e.alarm.datetime) : '';
-  const alarmNote = hasAlarm ? (e.alarm.note || '') : '';
+  const entryDateDT = e ? toDatetimeLocal(e.date) : toDatetimeLocal(new Date().toISOString());
 
   openModal(
     '<div class="modal-title">' + (e ? 'Editar' : 'Nueva') + ' anotación</div>' +
+    '<div class="form-group"><label class="form-label">Fecha de la anotación</label>' +
+    '<input type="datetime-local" class="form-input" id="fEntryDate" value="' + escAttr(entryDateDT) + '"></div>' +
     '<div class="form-group"><label class="form-label">Subsección</label>' +
     '<select class="form-select" id="fEntrySub"><option value="">— General —</option>' +
     t.subsections.map(s => '<option value="' + escAttr(s) + '"' + (s === sub ? ' selected' : '') + '>' + esc(s) + '</option>').join('') +
     '</select></div>' +
     '<div class="form-group"><label class="form-label">Texto</label>' +
     '<textarea class="form-textarea" id="fEntryText" rows="5" placeholder="Escribe aquí…">' + esc(text) + '</textarea></div>' +
-    '<div class="form-check"><input type="checkbox" id="fAlarmCheck" ' + (hasAlarm ? 'checked' : '') + ' onchange="toggleAlarm()">' +
-    '<label for="fAlarmCheck">⏰ Añadir recordatorio</label></div>' +
-    '<div id="alarmFields" style="display:' + (hasAlarm ? 'block' : 'none') + '">' +
-    '<div class="form-group"><label class="form-label">Fecha y hora del aviso</label>' +
-    '<input type="datetime-local" class="form-input" id="fAlarmDT" value="' + escAttr(alarmDT) + '"></div>' +
-    '<div class="form-group"><label class="form-label">Nota del recordatorio</label>' +
-    '<input class="form-input" id="fAlarmNote" value="' + escAttr(alarmNote) + '" placeholder="Opcional"></div></div>' +
     '<div class="btn-row"><button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>' +
     '<button type="button" class="btn btn-primary" id="btnSaveEntry">' + (e ? 'Guardar' : 'Añadir') + '</button></div>'
   );
@@ -804,20 +756,6 @@ function showEntryModal(topicId, editId) {
   }, 100);
 }
 
-function toggleAlarm() {
-  const show = document.getElementById('fAlarmCheck').checked;
-  document.getElementById('alarmFields').style.display = show ? 'block' : 'none';
-  if (show) {
-    const dt = document.getElementById('fAlarmDT');
-    if (dt && !dt.value) {
-      const tom = new Date();
-      tom.setDate(tom.getDate() + 1);
-      tom.setHours(9, 0, 0, 0);
-      dt.value = toDatetimeLocal(tom);
-    }
-  }
-}
-
 function saveEntry(topicId, editId) {
   const t = getTopic(topicId);
   if (!t) return;
@@ -825,13 +763,11 @@ function saveEntry(topicId, editId) {
   if (!text) { toast('Escribe algo', 'error'); return; }
   const sub = document.getElementById('fEntrySub').value;
   
-  const hasAlarm = document.getElementById('fAlarmCheck').checked;
-  let alarm = null;
-
-  if (hasAlarm) {
-    const dt = document.getElementById('fAlarmDT').value;
-    if (!dt) { toast('Selecciona fecha y hora', 'error'); return; }
-    alarm = { datetime: dt, note: document.getElementById('fAlarmNote').value.trim() };
+  const entryDateRaw = document.getElementById('fEntryDate').value;
+  let finalEntryDate = new Date().toISOString();
+  if (entryDateRaw) {
+    const d = new Date(entryDateRaw);
+    if (!isNaN(d.getTime())) finalEntryDate = d.toISOString();
   }
 
   if (editId) {
@@ -839,24 +775,20 @@ function saveEntry(topicId, editId) {
     if (e) { 
       e.text = text; 
       e.subsection = sub; 
-      e.alarm = alarm; 
+      e.date = finalEntryDate; 
     }
   } else {
     if (!t.entries) t.entries = [];
-    t.entries.push({ id: genId(), topicId, subsection: sub, text, date: new Date().toISOString(), alarm });
+    t.entries.push({ id: genId(), topicId, subsection: sub, text, date: finalEntryDate });
   }
   
-  // Evitar que el usuario piense que la anotación se ha eliminado si cambió de subsección
-  if (currentView === 'topic') {
-    currentSubFilter = sub || null;
-  }
+  if (currentView === 'topic') currentSubFilter = sub || null;
 
-  save(); 
-  closeModal();
+  save(); closeModal();
   toast(editId ? 'Anotación guardada' : 'Anotación añadida', 'success');
 
   if (currentView === 'entry' && editId) renderEntry();
-  else renderTopic();
+  else if (currentView === 'topic') renderTopic();
 }
 
 /* ── Add subsection ── */
@@ -925,19 +857,22 @@ function deleteEntry(topicId, entryId) {
    EXPORT
    ═══════════════════════════════════════ */
 function showExportModal() {
-  const saved = getSavedFilename();
   const tc = state.topics.length;
   const ec = state.topics.reduce((n, t) => (t.entries || []).length + n, 0);
+  
+  // Usar la fecha de hoy para crear nombres por defecto que no colisionen
+  const today = new Date().toISOString().split('T')[0];
+  const defaultName = `nikki-backup-${today}`;
 
   openModal(
     '<div class="modal-title">Exportar datos</div>' +
     '<div class="form-group"><label class="form-label">Nombre del archivo</label>' +
-    '<div class="form-input-group"><input class="form-input" id="fExportName" value="' + escAttr(saved) + '" placeholder="nikki-backup">' +
+    '<div class="form-input-group"><input class="form-input" id="fExportName" value="' + defaultName + '">' +
     '<span class="form-input-suffix">.json</span></div></div>' +
-    '<div class="form-check"><input type="checkbox" id="fRememberName" checked>' +
-    '<label for="fRememberName">Recordar este nombre</label></div>' +
     '<p style="color:var(--text-tertiary);font-size:0.8rem;text-align:center;margin-top:4px;">' +
     tc + ' tema' + (tc !== 1 ? 's' : '') + ' · ' + ec + ' anotación' + (ec !== 1 ? 'es' : '') + '</p>' +
+    '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;margin-top:16px;line-height:1.4;">' +
+    '<strong>Consejo para iPhone:</strong> Si eliges <em>"Guardar en Archivos"</em>, el sistema te preguntará si deseas reemplazar el archivo existente o crear copias.</p>' +
     '<div class="btn-row"><button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>' +
     '<button type="button" class="btn btn-primary" id="btnExport">Exportar</button></div>'
   );
@@ -949,29 +884,50 @@ function showExportModal() {
   }, 350);
 }
 
-function doExport() {
+async function doExport() {
   let name = (document.getElementById('fExportName').value || '').trim();
   if (!name) name = 'nikki-backup';
   name = name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑü_\-\s]/g, '').replace(/\s+/g, '-');
   if (!name) name = 'nikki-backup';
 
-  if (document.getElementById('fRememberName').checked) setSavedFilename(name);
-
   const filename = name + '.json';
   const json = JSON.stringify(state, null, 2);
   closeModal();
 
+  // 1. Sistema avanzado para PC (Chrome/Edge): Abre ventana de "Guardar como" y permite reemplazar nativamente.
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'Respaldo JSON', accept: {'application/json': ['.json']} }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      toast('Exportado y guardado', 'success');
+      return;
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error(err);
+      return; // El usuario canceló o hubo error
+    }
+  }
+
+  // 2. Sistema nativo móvil (Menú de compartir)
   if (navigator.canShare) {
     try {
       const file = new File([json], filename, { type: 'application/json' });
       if (navigator.canShare({ files: [file] })) {
-        navigator.share({ files: [file], title: '日記 Backup' }).then(() => {
-          toast('Exportado', 'success');
-        }).catch(() => dlFile(json, filename));
+        await navigator.share({ files: [file], title: '日記 Backup' });
+        toast('Exportado', 'success');
         return;
       }
-    } catch(e) {}
+    } catch(e) {
+      if (e.name !== 'AbortError') dlFile(json, filename);
+      return;
+    }
   }
+  
+  // 3. Método tradicional por defecto (Añadirá (1) si el archivo ya existe y el navegador no pregunta)
   dlFile(json, filename);
 }
 
@@ -1014,25 +970,17 @@ function handleImportFile(evt) {
       const d = JSON.parse(ev.target.result);
       if (!d.topics || !Array.isArray(d.topics)) throw new Error();
       const ec = d.topics.reduce((n, t) => (t.entries || []).length + n, 0);
-      const ac = d.topics.reduce((n, t) => (t.entries || []).filter(e => e.alarm).length + n, 0);
 
       $p.style.display = 'block';
       let info = '<strong>' + esc(file.name) + '</strong><br>' +
-        d.topics.length + ' tema' + (d.topics.length !== 1 ? 's' : '') + ' · ' + ec + ' anotación' + (ec !== 1 ? 'es' : '') +
-        (ac > 0 ? ' · ' + ac + ' alarma' + (ac !== 1 ? 's' : '') : '');
+        d.topics.length + ' tema' + (d.topics.length !== 1 ? 's' : '') + ' · ' + ec + ' anotación' + (ec !== 1 ? 'es' : '');
 
-      const baseName = file.name.replace(/\.json$/i, '');
-      if (baseName && baseName !== getSavedFilename()) {
-        info += '<div class="form-check" style="padding:6px 0 0"><input type="checkbox" id="fAdoptName" checked>' +
-          '<label for="fAdoptName">Usar «' + esc(baseName) + '» como nombre de exportación</label></div>';
-      }
       if (state.topics.length > 0) {
         info += '<p style="color:var(--danger);font-size:0.8rem;margin-top:8px;">⚠ Esto reemplazará tus ' + state.topics.length + ' temas actuales</p>';
       }
       $p.innerHTML = info;
       $b.style.display = '';
       window._importData = d;
-      window._importFileName = file.name;
       $b.onclick = doImport;
     } catch(err) {
       $p.style.display = 'block';
@@ -1048,12 +996,6 @@ function doImport() {
   const d = window._importData;
   if (!d || !d.topics) return;
 
-  const $a = document.getElementById('fAdoptName');
-  if ($a && $a.checked && window._importFileName) {
-    const b = window._importFileName.replace(/\.json$/i, '');
-    if (b) setSavedFilename(b);
-  }
-
   d.topics.forEach(t => {
     if (!t.id) t.id = genId();
     if (!t.entries) t.entries = [];
@@ -1067,7 +1009,6 @@ function doImport() {
   state = d;
   save();
   window._importData = null;
-  window._importFileName = null;
   closeModal();
   toast('Datos importados', 'success');
   goHome();
