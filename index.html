@@ -1164,13 +1164,13 @@ function showExportModal() {
   const tc = state.topics.length;
   const ec = state.topics.reduce((n, t) => (t.entries || []).length + n, 0);
   
-  const today = new Date().toISOString().split('T')[0];
-  const defaultName = 'nikki-backup-' + today;
+  // Usar el último nombre guardado (o uno fijo) para que el iPhone permita sobreescribir el mismo archivo siempre.
+  const defaultName = getSavedFilename() || 'diario-nikki';
 
   openModal(
     '<div class="modal-title">Exportar Diario</div>' +
     '<div class="form-group"><label class="form-label">Nombre del archivo</label>' +
-    '<div class="form-input-group"><input class="form-input" id="fExportName" value="' + defaultName + '">' +
+    '<div class="form-input-group"><input class="form-input" id="fExportName" value="' + escAttr(defaultName) + '">' +
     '<span class="form-input-suffix">.json</span></div></div>' +
     '<p style="color:var(--text-tertiary);font-size:0.8rem;text-align:center;margin-top:4px;">' +
     tc + ' temas · ' + ec + ' anotaciones</p>' +
@@ -1187,9 +1187,12 @@ function showExportModal() {
 
 async function doExport() {
   let name = (document.getElementById('fExportName').value || '').trim();
-  if (!name) name = 'nikki-backup';
+  if (!name) name = 'diario-nikki';
   name = name.replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑü_\-\s]/g, '').replace(/\s+/g, '-');
-  if (!name) name = 'nikki-backup';
+  if (!name) name = 'diario-nikki';
+
+  // Guardamos el nombre escogido para recordarlo la próxima vez
+  setSavedFilename(name);
 
   const filename = name + '.json';
   const json = JSON.stringify(state, null, 2);
@@ -1322,5 +1325,3 @@ render();
 
 </body>
 </html>
-
-
