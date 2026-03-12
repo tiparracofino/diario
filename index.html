@@ -1,74 +1,383 @@
-/* --- Utilidades de Persistencia de Nombre --- */
-function getSavedFilename() {
-  return localStorage.getItem('nikki_export_name') || 'mi-diario-nikki';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="日記">
+<meta name="theme-color" content="#F9F8F6">
+<title>日記 · Nikki — Diario</title>
+<link rel="manifest" href="manifest.json">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap');
+
+:root {
+  --bg-primary: #F9F8F6;
+  --bg-secondary: #F0EFEA;
+  --bg-tertiary: #E8E6E0;
+  --tile-bg: #F0EBE1;
+  --tile-shadow: 0 4px 8px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -2px 4px rgba(0,0,0,0.04);
+  --text-primary: #2B2A28;
+  --text-secondary: #6E6A63; 
+  --text-tertiary: #A19D95;
+  --border-primary: #E0DDD6;
+  --border-subtle: rgba(43, 42, 40, 0.06);
+  --accent: #A63C3C;
+  --accent-soft: rgba(166, 60, 60, 0.08);
+  --danger: #A63C3C;
+  --glass-bg: rgba(249, 248, 246, 0.85);
+  --radius-tile: 12px;
+  --transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-function setSavedFilename(name) {
-  localStorage.setItem('nikki_export_name', name);
+[data-theme="washi"] {
+  --bg-primary: #181716; 
+  --bg-secondary: #22201F;
+  --bg-tertiary: #2C2A28;
+  --tile-bg: #242220;
+  --tile-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05), inset 0 -2px 4px rgba(0,0,0,0.2);
+  --text-primary: #E8E6E1; 
+  --text-secondary: #A19D95;
+  --text-tertiary: #6E6A63;
+  --border-primary: #3A3734;
+  --border-subtle: rgba(232, 230, 225, 0.06);
+  --accent: #C25151;
+  --accent-soft: rgba(194, 81, 81, 0.12);
+  --glass-bg: rgba(24, 23, 22, 0.85);
 }
 
-/* --- Refinamiento de Fecha para Input --- */
-function toDatetimeLocal(isoString) {
-  if (!isoString) return '';
-  try {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return '';
-    const offset = d.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
-    return localISOTime;
-  } catch (e) {
-    return '';
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg-primary); color: var(--text-primary); font-family: 'Shippori Mincho', serif; overflow: hidden; -webkit-font-smoothing: antialiased; }
+body { display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 12px; flex-shrink: 0; z-index: 20; position: relative; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-subtle); }
+.app-title { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; cursor: pointer; }
+.app-title .kanji { font-size: 1.5rem; font-weight: 500; color: var(--text-primary); line-height: 1; letter-spacing: 0.05em; }
+.app-title .romaji { font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 500; color: var(--text-tertiary); letter-spacing: 0.25em; text-transform: uppercase; }
+.header-actions { display: flex; gap: 6px; }
+
+.icon-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 50%; color: var(--text-tertiary); cursor: pointer; transition: all var(--transition); }
+.icon-btn:hover { color: var(--text-primary); background: var(--bg-secondary); }
+
+.nav-tabs { display: flex; padding: 0 24px; gap: 20px; flex-shrink: 0; overflow-x: auto; background: var(--bg-primary); border-bottom: 1px solid var(--border-subtle); scrollbar-width: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab { padding: 14px 0; font-family: 'Inter', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); background: none; border: none; position: relative; cursor: pointer; white-space: nowrap; }
+.nav-tab.active { color: var(--text-primary); font-weight: 500; }
+.nav-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--text-primary); }
+.tab-count { font-size: 0.6rem; opacity: 0.5; margin-left: 4px; }
+
+.main-content { flex: 1; overflow-y: auto; padding: 24px; -webkit-overflow-scrolling: touch; }
+.all-notes-btn { background: transparent; border: none; color: var(--text-secondary); font-family: 'Inter', sans-serif; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.btn-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-primary); border-radius: 50%; }
+
+.topics-ceramic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 28px 12px; }
+.topic-grid-item { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; text-align: center; }
+.topic-tile { width: 68px; height: 68px; background: var(--tile-bg); color: var(--text-primary); border-radius: var(--radius-tile); display: flex; align-items: center; justify-content: center; box-shadow: var(--tile-shadow); transition: transform 0.2s ease; }
+.topic-grid-item:active .topic-tile { transform: scale(0.95); }
+.topic-tile svg { width: 30px; height: 30px; stroke-width: 1.8; }
+.topic-name { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 500; color: var(--text-secondary); }
+
+.view-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+.back-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.view-title { font-size: 1.4rem; font-weight: 500; flex: 1; display: flex; align-items: center; gap: 12px; }
+.header-icon-wrapper { width: 42px; height: 42px; background: var(--tile-bg); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: var(--tile-shadow); }
+
+.entry-card { padding-bottom: 32px; cursor: pointer; }
+.entry-date { font-family: 'Inter', sans-serif; font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.entry-text { font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+
+.fab { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-lg); z-index: 50; }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal { background: var(--bg-primary); width: 100%; max-width: 500px; padding: 24px; border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.modal-overlay.active .modal { transform: translateY(0); }
+
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; font-family: 'Inter', sans-serif; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; }
+.form-input, .form-textarea, .form-select { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid transparent; border-radius: 10px; color: var(--text-primary); font-family: inherit; font-size: 1rem; outline: none; }
+.form-textarea { min-height: 120px; }
+
+.btn-row { display: flex; gap: 12px; margin-top: 24px; }
+.btn { flex: 1; padding: 14px; border-radius: 10px; border: none; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; }
+.btn-primary { background: var(--text-primary); color: var(--bg-primary); }
+.btn-secondary { background: var(--bg-secondary); color: var(--text-primary); }
+
+.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: var(--bg-primary); padding: 10px 20px; border-radius: 20px; font-size: 0.8rem; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.visible { opacity: 1; }
+
+.animate-in { animation: fadeInUp 0.5s ease forwards; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.icon-option { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--tile-bg); border-radius: 8px; cursor: pointer; color: var(--text-secondary); }
+.icon-option.selected { background: var(--text-primary); color: var(--bg-primary); }
+.icon-option svg { width: 20px; height: 20px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title" onclick="goHome()">
+    <span class="kanji">日記</span>
+    <span class="romaji">Nikki</span>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+    <button class="icon-btn" onclick="showExportModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 14l5-5 5 5M12 9v12"/></svg></button>
+    <button class="icon-btn" onclick="showImportModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+  </div>
+</header>
+
+<nav class="nav-tabs" id="navTabs" style="display:none"></nav>
+<main class="main-content" id="mainContent"></main>
+
+<button class="fab" onclick="onFabClick()">
+  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+</button>
+
+<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'nikki_data';
+const THEME_KEY = 'nikki_theme';
+const FILE_NAME_KEY = 'nikki_filename';
+
+const SVG_ICONS = {
+  'casa': '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  'trabajo': '<rect x="2" y="3" width="20" height="12" rx="2"/><path d="M7 22h10"/><path d="M12 15v7"/>',
+  'estudio': '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  'zen': '<circle cx="12" cy="5" r="2"/><path d="M16 11l-4-4-4 4 2 4h4z"/><path d="M6 16l4-2"/><path d="M18 16l-4-2"/>',
+  'arte': '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+  'diario': '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  'ideas': '<path d="M9 18h6m-3 4h.01M12 2v1m7 2l-.7.7M5 5l.7.7M2 12h1m18 0h1m-10 3a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/>',
+  'viajes': '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',
+  'naturaleza': '<path d="M2 20L12 4l10 16z"/><circle cx="18" cy="6" r="2"/>',
+  'proyectos': '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'
+};
+
+let state = { topics: [] };
+let currentView = 'home';
+let currentTopicId = null;
+let currentSubFilter = null;
+let _toastTimer = null;
+
+function load() {
+  const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if (d && d.topics) state = d;
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function genId() { return Math.random().toString(36).substr(2, 9); }
+function getTopic(id) { return state.topics.find(t => t.id === id); }
+function toast(m) {
+  const e = document.getElementById('toast');
+  e.textContent = m; e.classList.add('visible');
+  clearTimeout(_toastTimer); _toastTimer = setTimeout(() => e.classList.remove('visible'), 2000);
+}
+
+function initTheme() {
+  const t = localStorage.getItem(THEME_KEY) || 'light';
+  document.documentElement.setAttribute('data-theme', t === 'washi' ? 'washi' : '');
+}
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'washi';
+  const next = isDark ? 'light' : 'washi';
+  document.documentElement.setAttribute('data-theme', next === 'washi' ? 'washi' : '');
+  localStorage.setItem(THEME_KEY, next);
+}
+
+function render() {
+  const $main = document.getElementById('mainContent');
+  const $nav = document.getElementById('navTabs');
+  $main.innerHTML = '';
+  
+  if (currentView === 'home') {
+    $nav.style.display = 'none';
+    let html = `<button class="all-notes-btn" onclick="openAllEntries()"><div class="btn-icon">☰</div> Ver todo</button><div class="topics-ceramic-grid">`;
+    state.topics.forEach(t => {
+      html += `<div class="topic-grid-item animate-in" onclick="openTopic('${t.id}')">
+        <div class="topic-tile">${renderIcon(t.icon)}</div>
+        <div class="topic-name">${t.name}</div>
+      </div>`;
+    });
+    $main.innerHTML = html + `</div>`;
+  } else if (currentView === 'topic') {
+    const t = getTopic(currentTopicId);
+    $nav.style.display = 'flex';
+    let tabs = `<button class="nav-tab ${!currentSubFilter?'active':''}" onclick="filterSub(null)">Todo</button>`;
+    t.subsections.forEach(s => {
+      tabs += `<button class="nav-tab ${currentSubFilter===s?'active':''}" onclick="filterSub('${s}')">${s}</button>`;
+    });
+    tabs += `<button class="nav-tab" onclick="showAddSubsection()" style="opacity:0.5">+ Apartado</button>`;
+    $nav.innerHTML = tabs;
+
+    let html = `<div class="view-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <span class="view-title"><div class="header-icon-wrapper">${renderIcon(t.icon)}</div> ${t.name}</span>
+      <button class="icon-btn" onclick="showTopicModal('${t.id}')">⚙</button>
+    </div>`;
+    
+    const entries = (t.entries || []).filter(e => !currentSubFilter || e.subsection === currentSubFilter)
+      .sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    entries.forEach(e => {
+      html += `<div class="entry-card animate-in" onclick="openEntry('${t.id}','${e.id}')">
+        <div class="entry-date">${new Date(e.date).toLocaleDateString()} ${e.subsection ? '· '+e.subsection : ''}</div>
+        <div class="entry-text">${e.text}</div>
+      </div>`;
+    });
+    $main.innerHTML = html;
   }
 }
 
-/* --- Exportación Robusta --- */
-async function doExport() {
-  let name = (document.getElementById('fExportName').value || '').trim();
-  if (!name) name = 'diario-nikki';
-  
-  // Limpieza de caracteres no permitidos en sistemas de archivos
-  name = name.replace(/[/\\?%*:|"<>]/g, '-');
-  setSavedFilename(name);
+function renderIcon(key) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${SVG_ICONS[key] || SVG_ICONS['casa']}</svg>`; }
 
-  const filename = `${name}.json`;
+function goHome() { currentView = 'home'; currentTopicId = null; render(); }
+function openTopic(id) { currentView = 'topic'; currentTopicId = id; currentSubFilter = null; render(); }
+function filterSub(s) { currentSubFilter = s; render(); }
+
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+function onFabClick() {
+  if (currentView === 'home') showTopicModal();
+  else if (currentView === 'topic') showEntryModal(currentTopicId);
+}
+
+function showTopicModal(editId) {
+  const t = editId ? getTopic(editId) : null;
+  const icons = Object.keys(SVG_ICONS).map(i => `<div class="icon-option ${t?.icon===i?'selected':''}" onclick="selectIcon(this,'${i}')">${renderIcon(i)}</div>`).join('');
+  
+  openModal(`
+    <h3 style="margin-bottom:20px">${t?'Editar Tema':'Nuevo Tema'}</h3>
+    <div class="form-group"><label class="form-label">Nombre</label><input id="fName" class="form-input" value="${t?.name||''}"></div>
+    <div class="form-group"><label class="form-label">Icono</label><div class="icon-grid">${icons}</div><input type="hidden" id="fIcon" value="${t?.icon||'casa'}"></div>
+    <div class="form-group"><label class="form-label">Apartados (coma)</label><input id="fSubs" class="form-input" value="${t?.subsections.join(', ')||''}"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTopic('${editId||''}')">Guardar</button>
+    </div>
+  `);
+}
+
+function selectIcon(el, icon) {
+  document.querySelectorAll('.icon-option').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected'); document.getElementById('fIcon').value = icon;
+}
+
+function saveTopic(id) {
+  const name = document.getElementById('fName').value.trim();
+  const icon = document.getElementById('fIcon').value;
+  const subs = document.getElementById('fSubs').value.split(',').map(s => s.trim()).filter(Boolean);
+  if (!name) return;
+  if (id) {
+    const t = getTopic(id); t.name = name; t.icon = icon; t.subsections = subs;
+  } else {
+    state.topics.push({ id: genId(), name, icon, subsections: subs, entries: [] });
+  }
+  save(); closeModal(); render();
+}
+
+function showEntryModal(topicId) {
+  const t = getTopic(topicId);
+  const subs = t.subsections.map(s => `<option value="${s}" ${currentSubFilter===s?'selected':''}>${s}</option>`).join('');
+  openModal(`
+    <h3>Anotación</h3>
+    <div class="form-group"><label class="form-label">Apartado</label><select id="fESub" class="form-select"><option value="">Ninguno</option>${subs}</select></div>
+    <div class="form-group"><label class="form-label">Texto</label><textarea id="fEText" class="form-textarea"></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-primary" onclick="saveEntry('${topicId}')">Añadir</button>
+    </div>
+  `);
+}
+
+function saveEntry(tid) {
+  const text = document.getElementById('fEText').value;
+  const sub = document.getElementById('fESub').value;
+  if (!text) return;
+  getTopic(tid).entries.push({ id: genId(), text, subsection: sub, date: new Date().toISOString() });
+  save(); closeModal(); render();
+}
+
+/* --- SISTEMA DE EXPORTACIÓN (SOBREESCRIBIR / REEMPLAZAR) --- */
+function showExportModal() {
+  const last = localStorage.getItem(FILE_NAME_KEY) || 'diario-nikki';
+  openModal(`
+    <h3>Exportar Diario</h3>
+    <div class="form-group"><label class="form-label">Nombre del archivo</label>
+    <input id="fExpName" class="form-input" value="${last}"></div>
+    <p style="font-size:0.7rem; color:var(--text-tertiary)">En móvil, elige "Reemplazar" al guardar para no crear copias.</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="doExport()">Guardar</button>
+    </div>
+  `);
+}
+
+async function doExport() {
+  const name = document.getElementById('fExpName').value.trim() || 'diario-nikki';
+  localStorage.setItem(FILE_NAME_KEY, name);
   const json = JSON.stringify(state, null, 2);
+  const filename = name + '.json';
   closeModal();
 
-  // Prioridad 1: File System Access API (Desktop Chrome/Edge)
+  // 1. Escritorio (Chrome/Edge): Permite elegir y sobreescribir el mismo archivo
   if (window.showSaveFilePicker) {
     try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: filename,
-        types: [{ description: 'JSON File', accept: {'application/json': ['.json']} }],
-      });
+      const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ accept: {'application/json': ['.json']} }] });
       const writable = await handle.createWritable();
-      await writable.write(json);
-      await writable.close();
-      toast('Guardado con éxito', 'success');
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-    }
+      await writable.write(json); await writable.close();
+      toast('Archivo actualizado'); return;
+    } catch (e) { if (e.name !== 'AbortError') console.error(e); return; }
   }
 
-  // Prioridad 2: Web Share API (Móviles/iOS)
-  if (navigator.share && navigator.canShare) {
+  // 2. Móvil (iOS/Android): Usa compartir para forzar el diálogo de "reemplazar"
+  if (navigator.share) {
     const file = new File([json], filename, { type: 'application/json' });
-    if (navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'Respaldo de mi Diario',
-          text: 'Archivo de datos de Nikki'
-        });
-        toast('Compartido con éxito', 'success');
-        return;
-      } catch (e) {
-        if (e.name === 'AbortError') return;
-      }
-    }
+    try {
+      await navigator.share({ files: [file], title: 'Copia de Nikki' });
+      toast('Exportado con éxito'); return;
+    } catch (e) { }
   }
-  
-  // Prioridad 3: Descarga tradicional
-  dlFile(json, filename);
+
+  // 3. Descarga normal
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = filename; a.click(); toast('Descargado');
 }
+
+function showImportModal() {
+  openModal(`
+    <h3>Importar</h3>
+    <input type="file" id="fImp" accept=".json" class="form-input">
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+      <button class="btn btn-primary" onclick="doImport()">Cargar</button>
+    </div>
+  `);
+}
+
+function doImport() {
+  const file = document.getElementById('fImp').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.topics) { state = data; save(); goHome(); toast('Diario cargado'); closeModal(); }
+    } catch (e) { toast('Error de formato'); }
+  };
+  reader.readAsText(file);
+}
+
+load(); initTheme(); render();
+</script>
+</body>
+</html>
