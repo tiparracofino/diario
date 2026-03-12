@@ -175,7 +175,32 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* ─── Topics ─── */
+/* ─── Topics & All Notes Button ─── */
+.all-notes-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border-primary);
+  padding: 14px 20px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.all-notes-btn:hover {
+  background: var(--accent-soft);
+  color: var(--text-accent);
+  border-color: var(--accent);
+}
+
 .topics-grid { display: grid; gap: 12px; }
 
 .topic-card {
@@ -415,6 +440,7 @@ const DEFAULT_ICONS = ['📝','📖','💭','🎯','🏃','🍵','🎨','✦','�
 
 let state = { topics: [] };
 let currentView = 'home';
+let previousView = 'home';
 let currentTopicId = null;
 let currentSubFilter = null;
 let currentEntryId = null;
@@ -525,6 +551,7 @@ function render() {
   if (currentView === 'home') renderHome();
   else if (currentView === 'topic') renderTopic();
   else if (currentView === 'entry') renderEntry();
+  else if (currentView === 'all_entries') renderAllEntries();
 }
 
 function renderHome() {
@@ -536,7 +563,12 @@ function renderHome() {
     return;
   }
 
-  let html = '<div class="topics-grid">';
+  // Botón para ver todas las anotaciones
+  let html = '<button type="button" class="all-notes-btn" onclick="openAllEntries()">' +
+             '<span>≡</span> Ver todas las anotaciones' +
+             '</button>';
+
+  html += '<div class="topics-grid">';
   state.topics.forEach((t, i) => {
     const count = (t.entries || []).length;
     html += '<div class="topic-card animate-in" style="animation-delay:' + (i * 0.03) + 's" data-id="' + escAttr(t.id) + '" onclick="openTopic(this.dataset.id)">' +
@@ -547,6 +579,41 @@ function renderHome() {
       '<div class="topic-count">' + count + '</div></div>';
   });
   html += '</div>';
+  $main.innerHTML = html;
+}
+
+function renderAllEntries() {
+  $nav.style.display = 'none';
+  $fab.style.display = 'none';
+
+  let html = '<div class="view-header">' +
+    '<button type="button" class="back-btn" onclick="goHome()">←</button>' +
+    '<span class="view-title">Todas las anotaciones</span>' +
+    '</div>';
+
+  let allEntries = [];
+  state.topics.forEach(t => {
+    (t.entries || []).forEach(e => {
+      allEntries.push({ ...e, topicName: t.name, topicIcon: t.icon });
+    });
+  });
+
+  // Ordenar de más nueva a más vieja
+  allEntries.sort((a, b) => {
+    const d1 = new Date(a.date).getTime();
+    const d2 = new Date(b.date).getTime();
+    return (isNaN(d2) ? 0 : d2) - (isNaN(d1) ? 0 : d1);
+  });
+
+  if (allEntries.length === 0) {
+     html += '<div class="empty-state"><div class="enso">◯</div><p>No hay anotaciones en el diario.</p></div>';
+  } else {
+     allEntries.forEach((e, i) => {
+       // Se le pasa el prefijo de icono+tema para saber a qué pertenece cada nota
+       html += entryCardHTML(e, i, e.topicIcon + ' ' + e.topicName);
+     });
+  }
+
   $main.innerHTML = html;
 }
 
@@ -598,10 +665,12 @@ function renderTopic() {
   $main.innerHTML = html;
 }
 
-function entryCardHTML(e, i) {
+function entryCardHTML(e, i, customIconName) {
   const delay = Math.min((i || 0) * 0.03, 0.3);
+  const prefix = customIconName ? customIconName + ' · ' : '';
+
   return '<div class="entry-card animate-in" style="animation-delay:' + delay + 's" data-entry="' + escAttr(e.id) + '" data-topic="' + escAttr(e.topicId) + '" onclick="openEntry(this.dataset.topic,this.dataset.entry)">' +
-    '<div class="entry-date">' + formatDate(e.date) + (e.subsection ? ' · ' + esc(e.subsection) : '') + '</div>' +
+    '<div class="entry-date">' + prefix + formatDate(e.date) + (e.subsection ? ' · ' + esc(e.subsection) : '') + '</div>' +
     '<div class="entry-text">' + esc(e.text.length > 200 ? e.text.slice(0, 200) + '…' : e.text) + '</div>' +
     '</div>';
 }
@@ -615,7 +684,7 @@ function renderEntry() {
   $fab.style.display = 'none';
 
   let html = '<div class="view-header">' +
-    '<button type="button" class="back-btn" onclick="openTopic(currentTopicId)">←</button>' +
+    '<button type="button" class="back-btn" onclick="goBackFromEntry()">←</button>' +
     '<span class="view-title">' + (e.subsection ? esc(e.subsection) : 'Anotación') + '</span></div>' +
     '<div class="entry-detail-meta">' + formatDate(e.date) + ' · ' + t.icon + ' ' + esc(t.name) + '</div>' +
     '<div class="entry-detail-text">' + esc(e.text) + '</div>';
@@ -632,6 +701,7 @@ function renderEntry() {
    NAVIGATION
    ═══════════════════════════════════════ */
 function goHome() { 
+  previousView = 'home';
   currentView = 'home'; 
   currentTopicId = null; 
   currentSubFilter = null; 
@@ -640,6 +710,7 @@ function goHome() {
 }
 
 function openTopic(id) { 
+  previousView = currentView;
   currentView = 'topic'; 
   currentTopicId = id; 
   currentSubFilter = null; 
@@ -648,12 +719,29 @@ function openTopic(id) {
   $main.scrollTop = 0; 
 }
 
+function openAllEntries() {
+  previousView = currentView;
+  currentView = 'all_entries';
+  currentTopicId = null;
+  currentSubFilter = null;
+  currentEntryId = null;
+  render();
+  $main.scrollTop = 0;
+}
+
 function openEntry(topicId, entryId) { 
+  previousView = currentView; // Recuerda si vienes de un 'topic' específico o de 'all_entries'
   currentView = 'entry'; 
   currentTopicId = topicId; 
   currentEntryId = entryId; 
   render(); 
   $main.scrollTop = 0; 
+}
+
+function goBackFromEntry() {
+  // Te devuelve al lugar correcto según desde donde entraste a la nota
+  if (previousView === 'all_entries') openAllEntries();
+  else openTopic(currentTopicId);
 }
 
 function filterSub(sub) { currentSubFilter = sub || null; render(); }
@@ -789,6 +877,7 @@ function saveEntry(topicId, editId) {
 
   if (currentView === 'entry' && editId) renderEntry();
   else if (currentView === 'topic') renderTopic();
+  else if (currentView === 'all_entries') renderAllEntries();
 }
 
 /* ── Add subsection ── */
@@ -850,7 +939,10 @@ function confirmDeleteEntry(topicId, entryId) {
 function deleteEntry(topicId, entryId) {
   const t = getTopic(topicId);
   if (t) t.entries = (t.entries || []).filter(e => e.id !== entryId);
-  save(); closeModal(); toast('Anotación eliminada'); openTopic(topicId);
+  save(); closeModal(); toast('Anotación eliminada');
+  
+  if (previousView === 'all_entries') openAllEntries();
+  else openTopic(topicId);
 }
 
 /* ═══════════════════════════════════════
@@ -860,9 +952,9 @@ function showExportModal() {
   const tc = state.topics.length;
   const ec = state.topics.reduce((n, t) => (t.entries || []).length + n, 0);
   
-  // Usar la fecha de hoy para crear nombres por defecto que no colisionen
+  // Usar la fecha de hoy para evitar colisiones
   const today = new Date().toISOString().split('T')[0];
-  const defaultName = `nikki-backup-${today}`;
+  const defaultName = 'nikki-backup-' + today;
 
   openModal(
     '<div class="modal-title">Exportar datos</div>' +
@@ -872,7 +964,7 @@ function showExportModal() {
     '<p style="color:var(--text-tertiary);font-size:0.8rem;text-align:center;margin-top:4px;">' +
     tc + ' tema' + (tc !== 1 ? 's' : '') + ' · ' + ec + ' anotación' + (ec !== 1 ? 'es' : '') + '</p>' +
     '<p style="color:var(--text-secondary);font-size:0.75rem;text-align:center;margin-top:16px;line-height:1.4;">' +
-    '<strong>Consejo para iPhone:</strong> Si eliges <em>"Guardar en Archivos"</em>, el sistema te preguntará si deseas reemplazar el archivo existente o crear copias.</p>' +
+    '<strong>Aviso iOS/Android:</strong> Al exportar, elige <em>Guardar en Archivos / Dispositivo</em>. Si el nombre ya existe, tu teléfono te preguntará si deseas reemplazarlo.</p>' +
     '<div class="btn-row"><button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>' +
     '<button type="button" class="btn btn-primary" id="btnExport">Exportar</button></div>'
   );
@@ -894,7 +986,7 @@ async function doExport() {
   const json = JSON.stringify(state, null, 2);
   closeModal();
 
-  // 1. Sistema avanzado para PC (Chrome/Edge): Abre ventana de "Guardar como" y permite reemplazar nativamente.
+  // 1. Desktop avanzado (File System Access API) para sobreescribir nativamente
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -908,7 +1000,7 @@ async function doExport() {
       return;
     } catch (err) {
       if (err.name !== 'AbortError') console.error(err);
-      return; // El usuario canceló o hubo error
+      return; 
     }
   }
 
@@ -917,7 +1009,7 @@ async function doExport() {
     try {
       const file = new File([json], filename, { type: 'application/json' });
       if (navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: '日記 Backup' });
+        await navigator.share({ files: [file], title: 'Diario Nikki Backup' });
         toast('Exportado', 'success');
         return;
       }
@@ -927,7 +1019,7 @@ async function doExport() {
     }
   }
   
-  // 3. Método tradicional por defecto (Añadirá (1) si el archivo ya existe y el navegador no pregunta)
+  // 3. Fallback tradicional
   dlFile(json, filename);
 }
 
