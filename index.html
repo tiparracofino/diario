@@ -5,116 +5,148 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="日記">
-<meta name="theme-color" content="#F9F8F6">
+<meta name="apple-mobile-web-app-title" content="Nikki">
+<meta name="theme-color" content="#F5F4F0">
 <title>日記 · Nikki — Diario</title>
 <link rel="manifest" href="manifest.json">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  --bg-primary: #F9F8F6;
-  --bg-secondary: #F0EFEA;
-  --bg-tertiary: #E8E6E0;
-  --tile-bg: #F0EBE1;
-  --tile-shadow: 0 4px 8px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -2px 4px rgba(0,0,0,0.04);
-  --text-primary: #2B2A28;
-  --text-secondary: #6E6A63; 
-  --text-tertiary: #A19D95;
-  --border-primary: #E0DDD6;
-  --border-subtle: rgba(43, 42, 40, 0.06);
-  --accent: #A63C3C;
-  --accent-soft: rgba(166, 60, 60, 0.08);
-  --danger: #A63C3C;
-  --glass-bg: rgba(249, 248, 246, 0.85);
-  --radius-tile: 12px;
-  --transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-lg: 0 10px 30px rgba(0,0,0,0.08);
+  /* Paleta Japonesa Clara (Wa-iro) */
+  --bg-app: #F5F4F0;         /* Shiro-Neri (Seda sin blanquear) */
+  --bg-surface: #FFFFFF;     /* Tarjetas blancas puras */
+  --bg-input: #EBEAE4;       /* Tono papel reciclado suave */
+  --text-main: #242321;      /* Sumi (Tinta negra suave) */
+  --text-muted: #85847E;     /* Hai-iro (Gris ceniza) */
+  --accent: #C73E3A;         /* Shu-iro (Rojo bermellón tradicional) */
+  --accent-light: rgba(199, 62, 58, 0.08);
+  --border-soft: #E3E2DC;
+  --glass-bg: rgba(245, 244, 240, 0.85);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 12px 32px rgba(36, 35, 33, 0.06);
+  --shadow-lg: 0 24px 48px rgba(36, 35, 33, 0.1);
+  --radius-lg: 24px;
+  --radius-md: 16px;
 }
 
 [data-theme="washi"] {
-  --bg-primary: #181716; 
-  --bg-secondary: #22201F;
-  --bg-tertiary: #2C2A28;
-  --tile-bg: #242220;
-  --tile-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.05), inset 0 -2px 4px rgba(0,0,0,0.2);
-  --text-primary: #E8E6E1; 
-  --text-secondary: #A19D95;
-  --text-tertiary: #6E6A63;
-  --border-primary: #3A3734;
-  --border-subtle: rgba(232, 230, 225, 0.06);
-  --accent: #C25151;
-  --accent-soft: rgba(194, 81, 81, 0.12);
-  --glass-bg: rgba(24, 23, 22, 0.85);
+  /* Paleta Japonesa Oscura */
+  --bg-app: #151412;         /* Kuro (Negro tradicional) */
+  --bg-surface: #1E1D1A;     
+  --bg-input: #292824;
+  --text-main: #E8E7E3;      /* Gofun (Blanco tiza) */
+  --text-muted: #807E78;
+  --accent: #D75450;         /* Rojo bermellón apagado elegante */
+  --accent-light: rgba(215, 84, 80, 0.12);
+  --border-soft: #302E2A;
+  --glass-bg: rgba(21, 20, 18, 0.85);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.6);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; background: var(--bg-primary); color: var(--text-primary); font-family: 'Shippori Mincho', serif; overflow: hidden; -webkit-font-smoothing: antialiased; }
+html, body { height: 100%; background: var(--bg-app); color: var(--text-main); font-family: 'Inter', sans-serif; overflow: hidden; -webkit-font-smoothing: antialiased; }
 body { display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
 
-.app-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 12px; flex-shrink: 0; z-index: 20; position: relative; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-subtle); }
-.app-title { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; cursor: pointer; }
-.app-title .kanji { font-size: 1.5rem; font-weight: 500; color: var(--text-primary); line-height: 1; letter-spacing: 0.05em; }
-.app-title .romaji { font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 500; color: var(--text-tertiary); letter-spacing: 0.25em; text-transform: uppercase; }
-.header-actions { display: flex; gap: 6px; }
+/* --- HEADER --- */
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; z-index: 20; position: relative; background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-bottom: 1px solid var(--border-soft); }
+.app-title { display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; }
+.app-title .kanji { font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 600; color: var(--text-main); line-height: 1.2; }
+.app-title .romaji { font-size: 0.65rem; font-weight: 600; color: var(--accent); letter-spacing: 0.25em; text-transform: uppercase; }
+.header-actions { display: flex; gap: 8px; }
 
-.icon-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 50%; color: var(--text-tertiary); cursor: pointer; transition: all var(--transition); }
-.icon-btn:hover { color: var(--text-primary); background: var(--bg-secondary); }
+.icon-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 50%; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+.icon-btn:hover, .icon-btn:active { color: var(--text-main); background: var(--bg-input); }
 
-.nav-tabs { display: flex; padding: 0 24px; gap: 20px; flex-shrink: 0; overflow-x: auto; background: var(--bg-primary); border-bottom: 1px solid var(--border-subtle); scrollbar-width: none; }
+/* --- NAVEGACIÓN DE PESTAÑAS --- */
+.nav-tabs { display: flex; padding: 0 24px; gap: 24px; flex-shrink: 0; overflow-x: auto; background: var(--bg-app); border-bottom: 1px solid var(--border-soft); scrollbar-width: none; }
 .nav-tabs::-webkit-scrollbar { display: none; }
-.nav-tab { padding: 14px 0; font-family: 'Inter', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); background: none; border: none; position: relative; cursor: pointer; white-space: nowrap; }
-.nav-tab.active { color: var(--text-primary); font-weight: 500; }
-.nav-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--text-primary); }
-.tab-count { font-size: 0.6rem; opacity: 0.5; margin-left: 4px; }
+.nav-tab { padding: 16px 0; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); background: none; border: none; position: relative; cursor: pointer; white-space: nowrap; transition: color 0.2s; }
+.nav-tab.active { color: var(--text-main); font-weight: 600; }
+.nav-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--text-main); border-radius: 2px 2px 0 0; }
 
+/* --- CONTENIDO PRINCIPAL --- */
 .main-content { flex: 1; overflow-y: auto; padding: 24px; -webkit-overflow-scrolling: touch; }
-.all-notes-btn { background: transparent; border: none; color: var(--text-secondary); font-family: 'Inter', sans-serif; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
-.btn-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-primary); border-radius: 50%; }
 
-.topics-ceramic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 28px 12px; }
-.topic-grid-item { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; text-align: center; }
-.topic-tile { width: 68px; height: 68px; background: var(--tile-bg); color: var(--text-primary); border-radius: var(--radius-tile); display: flex; align-items: center; justify-content: center; box-shadow: var(--tile-shadow); transition: transform 0.2s ease; }
-.topic-grid-item:active .topic-tile { transform: scale(0.95); }
-.topic-tile svg { width: 30px; height: 30px; stroke-width: 1.8; }
-.topic-name { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 500; color: var(--text-secondary); }
+/* Sección Inicio */
+.home-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.section-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.all-notes-btn { background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-main); font-size: 0.75rem; font-weight: 600; border-radius: 100px; padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: transform 0.2s, box-shadow 0.2s; }
+.all-notes-btn:active { transform: scale(0.96); box-shadow: none; }
 
-.view-header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-.back-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.view-title { font-size: 1.4rem; font-weight: 500; flex: 1; display: flex; align-items: center; gap: 12px; }
-.header-icon-wrapper { width: 42px; height: 42px; background: var(--tile-bg); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: var(--tile-shadow); }
+/* Cuadrícula de Cuadernos (Premium Cards) */
+.topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; padding-bottom: 80px; }
+.topic-card { background: var(--bg-surface); border-radius: var(--radius-lg); padding: 24px 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; cursor: pointer; box-shadow: var(--shadow-md); border: 1px solid var(--border-soft); transition: transform 0.2s ease; }
+.topic-card:active { transform: scale(0.96); }
+.topic-icon-wrap { width: 48px; height: 48px; border-radius: 14px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+.topic-icon-wrap svg { width: 24px; height: 24px; stroke-width: 1.8; }
+.topic-info { width: 100%; }
+.topic-name { font-family: 'Shippori Mincho', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topic-count { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
 
-.entry-card { padding-bottom: 32px; cursor: pointer; }
-.entry-date { font-family: 'Inter', sans-serif; font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.entry-text { font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+/* Vistas de Entradas (Topic / All) */
+.view-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+.view-title-group { display: flex; align-items: center; gap: 12px; flex: 1; justify-content: center; }
+.view-title-icon { color: var(--accent); display: flex; }
+.view-title-text { font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 600; color: var(--text-main); }
+.nav-icon-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--bg-surface); border: 1px solid var(--border-soft); color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform 0.2s; }
+.nav-icon-btn:active { transform: scale(0.92); }
 
-.fab { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); right: 24px; width: 56px; height: 56px; border-radius: 50%; background: var(--text-primary); color: var(--bg-primary); border: none; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-lg); z-index: 50; }
+.entries-list { display: flex; flex-direction: column; gap: 16px; padding-bottom: 80px; }
+.entry-card { background: var(--bg-surface); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-soft); cursor: pointer; transition: transform 0.2s; }
+.entry-card:active { transform: scale(0.98); }
+.entry-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.entry-meta-tag { background: var(--accent-light); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; }
+.entry-text { font-family: 'Shippori Mincho', serif; font-size: 1.1rem; line-height: 1.7; color: var(--text-main); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+/* FAB Premium */
+.fab { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); right: 24px; width: 60px; height: 60px; border-radius: 20px; background: var(--text-main); color: var(--bg-app); border: none; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: var(--shadow-lg); transition: transform 0.2s ease; cursor: pointer; }
+.fab:active { transform: scale(0.9); }
+
+/* --- MODALES --- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
 .modal-overlay.active { opacity: 1; pointer-events: auto; }
-.modal { background: var(--bg-primary); width: 100%; max-width: 500px; padding: 24px; border-radius: 20px 20px 0 0; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.modal { background: var(--bg-surface); width: 100%; max-width: 600px; padding: 32px 24px; border-radius: 32px 32px 0 0; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
 .modal-overlay.active .modal { transform: translateY(0); }
 
-.form-group { margin-bottom: 20px; }
-.form-label { display: block; font-family: 'Inter', sans-serif; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; }
-.form-input, .form-textarea, .form-select { width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid transparent; border-radius: 10px; color: var(--text-primary); font-family: inherit; font-size: 1rem; outline: none; }
-.form-textarea { min-height: 120px; }
+/* Detalle visual de arrastre */
+.modal-drag-indicator { width: 40px; height: 5px; background: var(--border-soft); border-radius: 3px; margin: 0 auto 24px; }
 
-.btn-row { display: flex; gap: 12px; margin-top: 24px; }
-.btn { flex: 1; padding: 14px; border-radius: 10px; border: none; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; }
-.btn-primary { background: var(--text-primary); color: var(--bg-primary); }
-.btn-secondary { background: var(--bg-secondary); color: var(--text-primary); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.modal-header h3 { font-family: 'Shippori Mincho', serif; font-size: 1.4rem; font-weight: 600; color: var(--text-main); }
 
-.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: var(--bg-primary); padding: 10px 20px; border-radius: 20px; font-size: 0.8rem; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.modal-body { flex: 1; overflow-y: auto; padding-right: 4px; }
+
+.form-group { margin-bottom: 24px; }
+.form-label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-input, .form-textarea, .form-select { width: 100%; padding: 16px; background: var(--bg-input); border: 2px solid transparent; border-radius: var(--radius-md); color: var(--text-main); font-family: inherit; font-size: 1rem; outline: none; transition: all 0.2s; }
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); background: var(--bg-surface); }
+.form-textarea { min-height: 160px; resize: vertical; font-family: 'Shippori Mincho', serif; font-size: 1.1rem; line-height: 1.6; }
+
+.btn-row { display: flex; gap: 10px; margin-top: 32px; flex-shrink: 0; }
+.btn { flex: 1; padding: 16px; border-radius: var(--radius-md); border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--text-main); color: var(--bg-app); }
+.btn-secondary { background: var(--bg-input); color: var(--text-main); }
+.btn-danger { background: rgba(199, 62, 58, 0.1); color: var(--accent); }
+
+.icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.icon-option { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--bg-input); border-radius: 14px; cursor: pointer; color: var(--text-muted); transition: all 0.2s; border: 2px solid transparent; }
+.icon-option.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.icon-option svg { width: 24px; height: 24px; }
+
+/* Vista de Lectura de Nota */
+.reader-date { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+.reader-text { font-family: 'Shippori Mincho', serif; font-size: 1.25rem; line-height: 1.8; color: var(--text-main); white-space: pre-wrap; padding-bottom: 24px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-app); padding: 12px 24px; border-radius: 100px; font-size: 0.85rem; font-weight: 500; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: var(--shadow-lg); }
 .toast.visible { opacity: 1; }
 
-.animate-in { animation: fadeInUp 0.5s ease forwards; }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-.icon-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-.icon-option { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--tile-bg); border-radius: 8px; cursor: pointer; color: var(--text-secondary); }
-.icon-option.selected { background: var(--text-primary); color: var(--bg-primary); }
-.icon-option svg { width: 20px; height: 20px; }
+.animate-in { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -125,9 +157,15 @@ body { display: flex; flex-direction: column; padding-top: env(safe-area-inset-t
     <span class="romaji">Nikki</span>
   </div>
   <div class="header-actions">
-    <button class="icon-btn" onclick="toggleTheme()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
-    <button class="icon-btn" onclick="showExportModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 14l5-5 5 5M12 9v12"/></svg></button>
-    <button class="icon-btn" onclick="showImportModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+    <button class="icon-btn" onclick="toggleTheme()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </button>
+    <button class="icon-btn" onclick="showExportModal()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 14l5-5 5 5M12 9v12"/></svg>
+    </button>
+    <button class="icon-btn" onclick="showImportModal()">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    </button>
   </div>
 </header>
 
@@ -135,7 +173,7 @@ body { display: flex; flex-direction: column; padding-top: env(safe-area-inset-t
 <main class="main-content" id="mainContent"></main>
 
 <button class="fab" onclick="onFabClick()">
-  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 </button>
 
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
@@ -175,7 +213,7 @@ function getTopic(id) { return state.topics.find(t => t.id === id); }
 function toast(m) {
   const e = document.getElementById('toast');
   e.textContent = m; e.classList.add('visible');
-  clearTimeout(_toastTimer); _toastTimer = setTimeout(() => e.classList.remove('visible'), 2000);
+  clearTimeout(_toastTimer); _toastTimer = setTimeout(() => e.classList.remove('visible'), 2500);
 }
 
 function initTheme() {
@@ -196,14 +234,27 @@ function render() {
   
   if (currentView === 'home') {
     $nav.style.display = 'none';
-    let html = `<button class="all-notes-btn" onclick="openAllEntries()"><div class="btn-icon">☰</div> Ver todo</button><div class="topics-ceramic-grid">`;
-    state.topics.forEach(t => {
-      html += `<div class="topic-grid-item animate-in" onclick="openTopic('${t.id}')">
-        <div class="topic-tile">${renderIcon(t.icon)}</div>
-        <div class="topic-name">${t.name}</div>
+    let html = `
+      <div class="home-header">
+        <button class="all-notes-btn" onclick="openAllEntries()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg> Registro
+        </button>
+        <span class="section-title">Mis Cuadernos</span>
+      </div>
+      <div class="topics-grid">`;
+      
+    state.topics.forEach((t, i) => {
+      const entryCount = t.entries ? t.entries.length : 0;
+      html += `<div class="topic-card animate-in" style="animation-delay: ${i * 0.04}s" onclick="openTopic('${t.id}')">
+        <div class="topic-icon-wrap">${renderIcon(t.icon)}</div>
+        <div class="topic-info">
+          <div class="topic-name">${t.name}</div>
+          <div class="topic-count">${entryCount} ${entryCount === 1 ? 'nota' : 'notas'}</div>
+        </div>
       </div>`;
     });
     $main.innerHTML = html + `</div>`;
+    
   } else if (currentView === 'topic') {
     const t = getTopic(currentTopicId);
     $nav.style.display = 'flex';
@@ -211,36 +262,107 @@ function render() {
     t.subsections.forEach(s => {
       tabs += `<button class="nav-tab ${currentSubFilter===s?'active':''}" onclick="filterSub('${s}')">${s}</button>`;
     });
-    tabs += `<button class="nav-tab" onclick="showAddSubsection()" style="opacity:0.5">+ Apartado</button>`;
+    tabs += `<button class="nav-tab" onclick="showAddSubsection()" style="opacity:0.6">+ Sección</button>`;
     $nav.innerHTML = tabs;
 
-    let html = `<div class="view-header">
-      <button class="back-btn" onclick="goHome()">←</button>
-      <span class="view-title"><div class="header-icon-wrapper">${renderIcon(t.icon)}</div> ${t.name}</span>
-      <button class="icon-btn" onclick="showTopicModal('${t.id}')">⚙</button>
-    </div>`;
+    let html = `
+      <div class="view-header animate-in">
+        <button class="nav-icon-btn" onclick="goHome()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <div class="view-title-group">
+          <span class="view-title-icon">${renderIcon(t.icon)}</span>
+          <span class="view-title-text">${t.name}</span>
+        </div>
+        <button class="nav-icon-btn" onclick="showTopicModal('${t.id}')">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+      <div class="entries-list">`;
     
     const entries = (t.entries || []).filter(e => !currentSubFilter || e.subsection === currentSubFilter)
       .sort((a,b) => new Date(b.date) - new Date(a.date));
 
-    entries.forEach(e => {
-      html += `<div class="entry-card animate-in" onclick="openEntry('${t.id}','${e.id}')">
-        <div class="entry-date">${new Date(e.date).toLocaleDateString()} ${e.subsection ? '· '+e.subsection : ''}</div>
+    if (entries.length === 0) {
+      html += `<div style="text-align:center; padding: 40px; color:var(--text-muted); font-size: 0.9rem;">El cuaderno está vacío.</div>`;
+    }
+
+    entries.forEach((e, i) => {
+      const dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+      const formattedDate = new Date(e.date).toLocaleDateString('es-ES', dateOpts);
+      
+      html += `
+      <div class="entry-card animate-in" style="animation-delay: ${i * 0.05}s" onclick="openEntry('${t.id}','${e.id}')">
+        <div class="entry-meta">
+          <span>${formattedDate}</span>
+          ${e.subsection ? `<span class="entry-meta-tag">${e.subsection}</span>` : ''}
+        </div>
         <div class="entry-text">${e.text}</div>
       </div>`;
     });
-    $main.innerHTML = html;
+    $main.innerHTML = html + `</div>`;
+
+  } else if (currentView === 'all') {
+    $nav.style.display = 'none';
+    let html = `
+      <div class="view-header animate-in">
+        <button class="nav-icon-btn" onclick="goHome()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <div class="view-title-group">
+          <span class="view-title-text">Registro Completo</span>
+        </div>
+        <div style="width: 44px;"></div>
+      </div>
+      <div class="entries-list">`;
+
+    let allEntries = [];
+    state.topics.forEach(t => {
+        (t.entries || []).forEach(e => {
+            allEntries.push({ ...e, topicName: t.name, topicIcon: t.icon, topicId: t.id });
+        });
+    });
+
+    allEntries.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (allEntries.length === 0) {
+        html += `<div style="text-align:center; padding: 40px; color:var(--text-muted); font-size: 0.9rem;">No hay ninguna anotación.</div>`;
+    } else {
+        allEntries.forEach((e, i) => {
+            const dateOpts = { day: 'numeric', month: 'short', year: 'numeric' };
+            const formattedDate = new Date(e.date).toLocaleDateString('es-ES', dateOpts);
+            
+            html += `
+            <div class="entry-card animate-in" style="animation-delay: ${i * 0.05}s" onclick="openEntry('${e.topicId}','${e.id}')">
+              <div class="entry-meta">
+                <span>${formattedDate}</span>
+                <span class="entry-meta-tag">${e.topicName}</span>
+                ${e.subsection ? `<span style="opacity: 0.6;">· ${e.subsection}</span>` : ''}
+              </div>
+              <div class="entry-text">${e.text}</div>
+            </div>`;
+        });
+    }
+    $main.innerHTML = html + `</div>`;
   }
 }
 
-function renderIcon(key) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${SVG_ICONS[key] || SVG_ICONS['casa']}</svg>`; }
+function renderIcon(key) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${SVG_ICONS[key] || SVG_ICONS['casa']}</svg>`; }
 
 function goHome() { currentView = 'home'; currentTopicId = null; render(); }
 function openTopic(id) { currentView = 'topic'; currentTopicId = id; currentSubFilter = null; render(); }
+function openAllEntries() { currentView = 'all'; currentTopicId = null; currentSubFilter = null; render(); }
 function filterSub(s) { currentSubFilter = s; render(); }
 
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
 function openModal(html) {
-  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-drag-indicator"></div>
+    ${html}
+  `;
   document.getElementById('modalOverlay').classList.add('active');
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
@@ -248,6 +370,7 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 function onFabClick() {
   if (currentView === 'home') showTopicModal();
   else if (currentView === 'topic') showEntryModal(currentTopicId);
+  else if (currentView === 'all') goHome(); 
 }
 
 function showTopicModal(editId) {
@@ -255,15 +378,27 @@ function showTopicModal(editId) {
   const icons = Object.keys(SVG_ICONS).map(i => `<div class="icon-option ${t?.icon===i?'selected':''}" onclick="selectIcon(this,'${i}')">${renderIcon(i)}</div>`).join('');
   
   openModal(`
-    <h3 style="margin-bottom:20px">${t?'Editar Tema':'Nuevo Tema'}</h3>
-    <div class="form-group"><label class="form-label">Nombre</label><input id="fName" class="form-input" value="${t?.name||''}"></div>
-    <div class="form-group"><label class="form-label">Icono</label><div class="icon-grid">${icons}</div><input type="hidden" id="fIcon" value="${t?.icon||'casa'}"></div>
-    <div class="form-group"><label class="form-label">Apartados (coma)</label><input id="fSubs" class="form-input" value="${t?.subsections.join(', ')||''}"></div>
+    <div class="modal-header">
+      <h3>${t ? 'Ajustes del Cuaderno' : 'Crear Cuaderno'}</h3>
+      <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Título</label><input id="fName" class="form-input" placeholder="Ej: Viaje a Kioto" value="${t?.name||''}"></div>
+      <div class="form-group"><label class="form-label">Icono</label><div class="icon-grid">${icons}</div><input type="hidden" id="fIcon" value="${t?.icon||'casa'}"></div>
+      <div class="form-group"><label class="form-label">Secciones (separadas por coma)</label><input id="fSubs" class="form-input" placeholder="Ej: Tareas, Reflexiones..." value="${t?.subsections.join(', ')||''}"></div>
+    </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      ${t ? `<button class="btn btn-danger" onclick="deleteTopic('${t.id}')">Eliminar</button>` : ''}
       <button class="btn btn-primary" onclick="saveTopic('${editId||''}')">Guardar</button>
     </div>
   `);
+}
+
+function deleteTopic(id) {
+  if(confirm('¿Seguro que quieres borrar este cuaderno con todas sus notas?')) {
+    state.topics = state.topics.filter(t => t.id !== id);
+    save(); closeModal(); goHome(); toast('Cuaderno eliminado');
+  }
 }
 
 function selectIcon(el, icon) {
@@ -284,16 +419,53 @@ function saveTopic(id) {
   save(); closeModal(); render();
 }
 
+function showAddSubsection() {
+  openModal(`
+    <div class="modal-header">
+      <h3>Nueva Sección</h3>
+      <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input id="fNewSub" class="form-input" placeholder="Ej: Finanzas">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveNewSubsection()">Añadir Sección</button>
+    </div>
+  `);
+}
+
+function saveNewSubsection() {
+  const val = document.getElementById('fNewSub').value.trim();
+  if(val) {
+    const t = getTopic(currentTopicId);
+    if(!t.subsections.includes(val)) {
+      t.subsections.push(val);
+      save();
+    }
+  }
+  closeModal(); render();
+}
+
 function showEntryModal(topicId) {
   const t = getTopic(topicId);
   const subs = t.subsections.map(s => `<option value="${s}" ${currentSubFilter===s?'selected':''}>${s}</option>`).join('');
   openModal(`
-    <h3>Anotación</h3>
-    <div class="form-group"><label class="form-label">Apartado</label><select id="fESub" class="form-select"><option value="">Ninguno</option>${subs}</select></div>
-    <div class="form-group"><label class="form-label">Texto</label><textarea id="fEText" class="form-textarea"></textarea></div>
+    <div class="modal-header">
+      <h3>Nueva Anotación</h3>
+      <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Sección</label><select id="fESub" class="form-select"><option value="">General</option>${subs}</select></div>
+      <div class="form-group" style="display:flex; flex-direction:column;">
+        <label class="form-label">Texto</label>
+        <textarea id="fEText" class="form-textarea" placeholder="Escribe aquí..."></textarea>
+      </div>
+    </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
-      <button class="btn btn-primary" onclick="saveEntry('${topicId}')">Añadir</button>
+      <button class="btn btn-primary" onclick="saveEntry('${topicId}')">Guardar</button>
     </div>
   `);
 }
@@ -303,51 +475,129 @@ function saveEntry(tid) {
   const sub = document.getElementById('fESub').value;
   if (!text) return;
   getTopic(tid).entries.push({ id: genId(), text, subsection: sub, date: new Date().toISOString() });
-  save(); closeModal(); render();
+  save(); closeModal(); render(); toast('Anotación guardada');
 }
 
-/* --- SISTEMA DE EXPORTACIÓN (SOBREESCRIBIR / REEMPLAZAR) --- */
-function showExportModal() {
-  const last = localStorage.getItem(FILE_NAME_KEY) || 'diario-nikki';
+// NUEVA FUNCIÓN: Para editar una nota existente
+function showEditEntryModal(topicId, entryId) {
+  const t = getTopic(topicId);
+  const e = t.entries.find(x => x.id === entryId);
+  const subs = t.subsections.map(s => `<option value="${s}" ${e.subsection===s?'selected':''}>${s}</option>`).join('');
+
   openModal(`
-    <h3>Exportar Diario</h3>
-    <div class="form-group"><label class="form-label">Nombre del archivo</label>
-    <input id="fExpName" class="form-input" value="${last}"></div>
-    <p style="font-size:0.7rem; color:var(--text-tertiary)">En móvil, elige "Reemplazar" al guardar para no crear copias.</p>
+    <div class="modal-header">
+      <h3>Editar Anotación</h3>
+      <button class="icon-btn" onclick="openEntry('${topicId}', '${entryId}')"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Sección</label>
+        <select id="fEditSub" class="form-select"><option value="">General</option>${subs}</select>
+      </div>
+      <div class="form-group" style="display:flex; flex-direction:column;">
+        <label class="form-label">Texto</label>
+        <textarea id="fEditText" class="form-textarea">${e.text}</textarea>
+      </div>
+    </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="doExport()">Guardar</button>
+      <button class="btn btn-secondary" onclick="openEntry('${topicId}', '${entryId}')">Cancelar</button>
+      <button class="btn btn-primary" onclick="updateEntry('${topicId}', '${entryId}')">Actualizar</button>
+    </div>
+  `);
+}
+
+// NUEVA FUNCIÓN: Guarda los cambios de la edición
+function updateEntry(tid, eid) {
+  const text = document.getElementById('fEditText').value;
+  const sub = document.getElementById('fEditSub').value;
+  if (!text) return;
+
+  const t = getTopic(tid);
+  const e = t.entries.find(x => x.id === eid);
+  
+  e.text = text;
+  e.subsection = sub;
+  
+  save(); 
+  closeModal(); 
+  render(); 
+  toast('Anotación actualizada');
+}
+
+// VISTA DE LECTURA DE NOTA (Ahora incluye el botón Editar)
+function openEntry(topicId, entryId) {
+  const t = getTopic(topicId);
+  const e = t.entries.find(x => x.id === entryId);
+  const dateOpts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+  openModal(`
+    <div class="modal-body" style="padding-top: 10px;">
+      <div class="reader-date">
+        <span>${new Date(e.date).toLocaleDateString('es-ES', dateOpts)}</span>
+        ${e.subsection ? `<span class="entry-meta-tag" style="font-size: 0.75rem;">${e.subsection}</span>` : ''}
+      </div>
+      <div class="reader-text">${e.text}</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="deleteEntry('${topicId}', '${entryId}')">Borrar</button>
+      <button class="btn btn-secondary" onclick="showEditEntryModal('${topicId}', '${entryId}')">Editar</button>
+      <button class="btn btn-primary" onclick="closeModal()">Cerrar</button>
+    </div>
+  `);
+}
+
+function deleteEntry(tid, eid) {
+  if(confirm('¿Eliminar esta anotación para siempre?')) {
+    const t = getTopic(tid);
+    t.entries = t.entries.filter(e => e.id !== eid);
+    save(); closeModal(); render(); toast('Nota eliminada');
+  }
+}
+
+/* --- ARCHIVO --- */
+function showExportModal() {
+  const last = localStorage.getItem(FILE_NAME_KEY) || 'nikki-copia';
+  openModal(`
+    <div class="modal-header">
+      <h3>Guardar Copia</h3>
+      <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre del archivo</label>
+        <input id="fExpName" class="form-input" value="${last}">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doExport()">Descargar Datos</button>
     </div>
   `);
 }
 
 async function doExport() {
-  const name = document.getElementById('fExpName').value.trim() || 'diario-nikki';
+  const name = document.getElementById('fExpName').value.trim() || 'nikki-copia';
   localStorage.setItem(FILE_NAME_KEY, name);
   const json = JSON.stringify(state, null, 2);
   const filename = name + '.json';
   closeModal();
 
-  // 1. Escritorio (Chrome/Edge): Permite elegir y sobreescribir el mismo archivo
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ accept: {'application/json': ['.json']} }] });
       const writable = await handle.createWritable();
       await writable.write(json); await writable.close();
-      toast('Archivo actualizado'); return;
+      toast('Archivo guardado'); return;
     } catch (e) { if (e.name !== 'AbortError') console.error(e); return; }
   }
 
-  // 2. Móvil (iOS/Android): Usa compartir para forzar el diálogo de "reemplazar"
   if (navigator.share) {
     const file = new File([json], filename, { type: 'application/json' });
     try {
-      await navigator.share({ files: [file], title: 'Copia de Nikki' });
-      toast('Exportado con éxito'); return;
+      await navigator.share({ files: [file], title: 'Copia Nikki' });
+      toast('Enviado'); return;
     } catch (e) { }
   }
 
-  // 3. Descarga normal
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = filename; a.click(); toast('Descargado');
@@ -355,11 +605,18 @@ async function doExport() {
 
 function showImportModal() {
   openModal(`
-    <h3>Importar</h3>
-    <input type="file" id="fImp" accept=".json" class="form-input">
+    <div class="modal-header">
+      <h3>Restaurar Copia</h3>
+      <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Selecciona el archivo .json</label>
+        <input type="file" id="fImp" accept=".json" style="margin-top:16px;">
+      </div>
+    </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
-      <button class="btn btn-primary" onclick="doImport()">Cargar</button>
+      <button class="btn btn-primary" onclick="doImport()">Restaurar</button>
     </div>
   `);
 }
@@ -371,7 +628,7 @@ function doImport() {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      if (data.topics) { state = data; save(); goHome(); toast('Diario cargado'); closeModal(); }
+      if (data.topics) { state = data; save(); goHome(); toast('Datos restaurados'); closeModal(); }
     } catch (e) { toast('Error de formato'); }
   };
   reader.readAsText(file);
@@ -381,3 +638,5 @@ load(); initTheme(); render();
 </script>
 </body>
 </html>
+
+
