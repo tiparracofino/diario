@@ -116,6 +116,8 @@ input,textarea,select{font-family:inherit;color:inherit;background:var(--surf-1)
 .fld{margin-bottom:20px}
 .fld-l{display:block;font-size:0.68rem;font-weight:700;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.12em}
 .fld-in,.fld-ta,.fld-sel{width:100%;padding:15px 18px;background:var(--surf-1);color:var(--text-1);border:none;border-radius:var(--r-sm);box-shadow:var(--neo-down);font-size:0.92rem;font-weight:500;outline:none;transition:box-shadow 0.2s;-webkit-appearance:none}
+/* Estilizar el input de fecha */
+input[type="date"]{font-family:var(--f-body);color:var(--text-1);text-transform:uppercase;font-size:0.88rem;letter-spacing:0.05em}
 .fld-in:focus,.fld-ta:focus,.fld-sel:focus{box-shadow:var(--neo-down),0 0 0 2px var(--blue-glow)}
 .fld-ta{min-height:130px;resize:none;font-family:var(--f-jp);font-size:1.05rem;line-height:1.6}
 .fld-sel{appearance:none;-webkit-appearance:none;background-color:var(--surf-1);background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237D776D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
@@ -197,6 +199,13 @@ function tp(i){
 function ico(k){ return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">' + (IC[k]||IC.folder) + '</svg>'; }
 function esc(s){ return (!s) ? '' : s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+// Devuelve YYYY-MM-DD para el input type="date" y para comprobaciones lógicas
+function isoYMD(dstr) {
+  var d = dstr ? new Date(dstr) : new Date();
+  var y = d.getFullYear(), m = d.getMonth() + 1, dd = d.getDate();
+  return y + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
+}
+
 function toast(m){
   var e = document.getElementById('toast');
   e.textContent = m; e.classList.add('show');
@@ -268,16 +277,23 @@ function render(){
   var $ = document.getElementById('main');
   updNav();
   $.scrollTop = 0;
+  
+  var todayYMD = isoYMD(); // Fecha de hoy en formato string YYYY-MM-DD para la comparación
 
   if(V==='home'){
-    var cnt=0; for(var i=0;i<S.topics.length;i++) cnt += (S.topics[i].entries||[]).length;
+    var cnt=0; 
     var cards='';
     for(var i=0;i<S.topics.length;i++){
-      var t=S.topics[i], n=(t.entries||[]).length;
+      var t=S.topics[i], entries=t.entries||[], visibleCount=0;
+      // Contar solo las notas pasadas o presentes
+      for(var j=0; j<entries.length; j++){
+        if(isoYMD(entries[j].date) <= todayYMD) visibleCount++;
+      }
+      cnt += visibleCount;
       cards += '<div class="b-card ani d'+(i+2)+'" onclick="openTopic(\''+t.id+'\')">'
         +'<div class="b-glow '+GLOWS[i%GLOWS.length]+'"></div>'
         +'<div class="b-ico">'+ico(t.icon)+'</div>'
-        +'<div class="b-info"><div class="b-name">'+esc(t.name)+'</div><div class="b-meta">'+n+' '+(n===1?'nota':'notas')+'</div></div></div>';
+        +'<div class="b-info"><div class="b-name">'+esc(t.name)+'</div><div class="b-meta">'+visibleCount+' '+(visibleCount===1?'nota':'notas')+'</div></div></div>';
     }
     $.innerHTML = '<div class="hero"><div class="hero-bar ani"><div class="hero-text"><span class="hero-sub">'+greet()+'</span><span class="hero-h">Mi Diario</span></div>'
       +'<button class="neo-btn" onclick="showSettings()">'+GEAR_SVG+'</button></div>'
@@ -295,7 +311,11 @@ function render(){
       tabs += '<button class="tab '+(SF===s?'on':'')+'" onclick="filt(\''+s+'\')">'+esc(s)+'</button>';
     }
     var ents = [];
-    for(var i=0;i<t.entries.length;i++){ var e=t.entries[i]; if(!SF||e.subsection===SF) ents.push(e); }
+    for(var i=0;i<t.entries.length;i++){ 
+      var e=t.entries[i]; 
+      // Filtrar por subsección Y ocultar si es del futuro
+      if((!SF||e.subsection===SF) && isoYMD(e.date) <= todayYMD) ents.push(e); 
+    }
     ents.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
     var cards='';
     for(var i=0;i<ents.length;i++){
@@ -317,7 +337,11 @@ function render(){
     for(var i=0;i<S.topics.length;i++){
       var t=S.topics[i], entries=t.entries||[];
       for(var j=0;j<entries.length;j++){
-        var e=entries[j]; all.push({id:e.id,text:e.text,image:e.image,subsection:e.subsection,date:e.date,tn:t.name,ti:t.id});
+        var e=entries[j]; 
+        // Solo agregar a la línea de tiempo si no es del futuro
+        if(isoYMD(e.date) <= todayYMD) {
+          all.push({id:e.id,text:e.text,image:e.image,subsection:e.subsection,date:e.date,tn:t.name,ti:t.id});
+        }
       }
     }
     all.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
@@ -419,6 +443,7 @@ function showEntrySh(tid){
   }
   openSh('<div class="sheet-hd"><h3>Nueva nota</h3><button class="sheet-x" onclick="closeSh()">'+X_SVG+'</button></div>'
     +'<div class="sheet-body">'
+    +'<div class="fld"><label class="fld-l">Fecha de la memoria</label><input type="date" id="fED" class="fld-in" value="'+isoYMD()+'"></div>'
     +'<div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>'+opts+'</select></div>'
     +'<div class="fld"><textarea id="fET" class="fld-ta" placeholder="¿Qué quieres recordar?"></textarea></div>'
     +'<div class="fld"><button class="photo-btn" onclick="document.getElementById(\'fEI\').click()">'+IMG_SVG+' Añadir foto</button>'
@@ -441,10 +466,21 @@ window.clImg = function(){ TI=null; var p=document.getElementById('imgP');if(p)p
 window.saveEntry = function(tid){
   var text = document.getElementById('fET').value.trim();
   var sub = document.getElementById('fES').value;
+  var dInp = document.getElementById('fED').value;
   if(!text && !TI){ toast('Escribe algo o sube una foto'); return; }
   var t = tp(tid); if(!t) return;
-  t.entries.push({id:gid(), text:text, image:TI, subsection:sub, date:new Date().toISOString()});
-  sv(); window.closeSh(); render(); toast('Guardado');
+  
+  var isoDate = dInp ? new Date(dInp + 'T12:00:00').toISOString() : new Date().toISOString();
+  t.entries.push({id:gid(), text:text, image:TI, subsection:sub, date:isoDate});
+  
+  sv(); window.closeSh(); render(); 
+  
+  // Mensaje especial si es una nota futura
+  if(dInp && isoYMD(dInp) > isoYMD()){
+    toast('Cápsula del tiempo guardada');
+  } else {
+    toast('Guardado');
+  }
 };
 
 window.openEntry = function(tid,eid){
@@ -468,6 +504,7 @@ window.showEditEntry = function(tid,eid){
   var prev = TI ? '<div class="ph-prev"><img src="'+TI+'" alt=""><button class="ph-rm" onclick="clImg()">'+X_SVG+'</button></div>' : '';
   openSh('<div class="sheet-hd"><h3>Editar nota</h3><button class="sheet-x" onclick="openEntry(\''+tid+'\',\''+eid+'\')">'+BACK_SVG+'</button></div>'
     +'<div class="sheet-body">'
+    +'<div class="fld"><label class="fld-l">Fecha de la memoria</label><input type="date" id="fED" class="fld-in" value="'+isoYMD(e.date)+'"></div>'
     +'<div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>'+opts+'</select></div>'
     +'<div class="fld"><textarea id="fET" class="fld-ta">'+esc(e.text)+'</textarea></div>'
     +'<div class="fld"><button class="photo-btn" onclick="document.getElementById(\'fEI\').click()">'+IMG_SVG+' Cambiar foto</button>'
@@ -478,10 +515,13 @@ window.showEditEntry = function(tid,eid){
 
 window.updEntry = function(tid,eid){
   var text=document.getElementById('fET').value.trim(), sub=document.getElementById('fES').value;
+  var dInp = document.getElementById('fED').value;
   if(!text&&!TI){toast('Escribe algo o sube una foto');return;}
   var t=tp(tid);if(!t)return;
   var e=null;for(var i=0;i<t.entries.length;i++){if(t.entries[i].id===eid){e=t.entries[i];break;}}if(!e)return;
   e.text=text; e.subsection=sub; e.image=TI;
+  if(dInp) e.date = new Date(dInp + 'T12:00:00').toISOString();
+  
   sv(); window.closeSh(); render(); toast('Actualizado');
 };
 
