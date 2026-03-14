@@ -110,11 +110,12 @@ input,textarea,select{font-family:inherit;color:inherit;background:var(--surf-1)
 .sheet-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-shrink:0}
 .sheet-hd h3{font-family:var(--f-display);font-size:1.3rem;font-weight:700}
 .sheet-x{width:36px;height:36px;border-radius:12px;background:var(--surf-1);box-shadow:var(--neo-up-sm);display:flex;align-items:center;justify-content:center;color:var(--text-3);transition:all 0.15s}
-.sheet-body{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.sheet-body{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:4px;}
 
 .fld{margin-bottom:20px}
 .fld-l{display:block;font-size:0.68rem;font-weight:700;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.12em}
-.fld-in,.fld-ta,.fld-sel{width:100%;padding:15px 18px;background:var(--surf-1);color:var(--text-1);border:none;border-radius:var(--r-sm);box-shadow:var(--neo-down);font-size:0.92rem;font-weight:500;outline:none}
+.fld-in,.fld-ta,.fld-sel{width:100%;padding:15px 18px;background:var(--surf-1);color:var(--text-1);border:none;border-radius:var(--r-sm);box-shadow:var(--neo-down);font-size:0.92rem;font-weight:500;outline:none;font-family:var(--f-body);}
+input[type="date"]{text-transform:uppercase;letter-spacing:0.05em;font-size:0.88rem;}
 .fld-ta{min-height:130px;resize:none}
 .fld-sel{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237D776D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
 
@@ -178,9 +179,6 @@ input,textarea,select{font-family:inherit;color:inherit;background:var(--surf-1)
 .pin-btn:active{box-shadow:var(--neo-down);transform:scale(0.92)}
 .pin-btn.empty{box-shadow:none;background:transparent;pointer-events:none}
 
-.cal-export-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);color:var(--blue);border-radius:var(--r-pill);font-size:0.75rem;font-weight:700;box-shadow:var(--neo-up-sm);transition:all 0.15s;margin-top:8px}
-.cal-export-btn:active{box-shadow:var(--neo-down);transform:scale(0.95)}
-
 @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .ani{animation:rise 0.5s var(--ease) both}
 .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}
@@ -213,8 +211,7 @@ var IC = {
   star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
   music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-  plane:'<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21.5 4s-2 .5-3.5 2L14.5 9.5 6.3 7.7 5 9l6 4-3 3-3-1-2 2 4.5 1.5L5 22l2-2-1-3 3-3 4 6 1.3-1.3z"/>',
-  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'
+  plane:'<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21.5 4s-2 .5-3.5 2L14.5 9.5 6.3 7.7 5 9l6 4-3 3-3-1-2 2 4.5 1.5L5 22l2-2-1-3 3-3 4 6 1.3-1.3z"/>'
 };
 
 var S = {topics:[]}, V = 'home', TID = null, SF = null, SEARCH = '', TI = null, TAudio = null, _t = null;
@@ -256,6 +253,7 @@ function sv(){
 function gid(){ return Math.random().toString(36).substr(2,9); }
 function tp(i){ return S.topics.find(t=>t.id===i); }
 function toast(m){ var e = document.getElementById('toast'); e.textContent = m; e.classList.add('show'); clearTimeout(_t); _t = setTimeout(()=>e.classList.remove('show'), 2400); }
+
 function isoYMD(dstr) { 
   var d = dstr ? new Date(dstr) : new Date(); 
   var y = d.getFullYear(), m = d.getMonth() + 1, dd = d.getDate();
@@ -263,12 +261,6 @@ function isoYMD(dstr) {
 }
 function fD(d){ return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}); }
 function fDL(d){ return new Date(d).toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
-function fDT(d){ return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
-function toLocalDT(dstr) {
-  var d = dstr ? new Date(dstr) : new Date();
-  var pad = n => n < 10 ? '0' + n : n;
-  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-}
 function esc(s){ return (!s) ? '' : s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function highlight(text, query) {
@@ -293,46 +285,6 @@ function compress(file,cb){
   };
   r.readAsDataURL(file);
 }
-
-// Nueva función para añadir evento al Calendario de Apple/Google
-window.addToCalendar = function(dateISO, text) {
-  var d = new Date(dateISO);
-  var endD = new Date(d.getTime() + 15 * 60000); // Duración del evento: 15 mins
-  
-  var pad = n => n < 10 ? '0' + n : n;
-  var fmt = dt => dt.getUTCFullYear() + pad(dt.getUTCMonth()+1) + pad(dt.getUTCDate()) + 'T' + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + 'Z';
-
-  // Formato ICS estricto
-  var icsMsg = 
-`BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Nikki Diario//ES
-BEGIN:VEVENT
-UID:${gid()}@nikkidiary.local
-DTSTAMP:${fmt(new Date())}
-DTSTART:${fmt(d)}
-DTEND:${fmt(endD)}
-SUMMARY:Alarma de Nikki 📔
-DESCRIPTION:${(text||'Recuerdos programados').replace(/\n/g, '\\n')}
-BEGIN:VALARM
-TRIGGER:-PT0M
-ACTION:DISPLAY
-DESCRIPTION:Alarma de Nikki
-END:VALARM
-END:VEVENT
-END:VCALENDAR`;
-
-  var blob = new Blob([icsMsg], { type: 'text/calendar;charset=utf-8' });
-  var url = window.URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'alarma-nikki.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-  toast("Se abrirá en Calendario...");
-};
 
 var GEAR_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 var BACK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>';
@@ -385,7 +337,7 @@ function renderCalendar() {
   
   for(var d=1; d<=daysInMonth; d++){
     var dateStr = `${CY}-${(CM+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr && new Date(e.date) <= new Date()));
+    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr && isoYMD(e.date) <= todayYMD));
     var isSel = (dateStr === SEL_DATE);
     daysHtml += `<div class="cal-d ${isSel?'sel':''}" onclick="selDate('${dateStr}')"><span class="cal-num">${d}</span>${hasEnt?'<div class="cal-dot"></div>':''}</div>`;
   }
@@ -393,7 +345,7 @@ function renderCalendar() {
   var list = [];
   S.topics.forEach(top => {
     top.entries.forEach(e => {
-      if(isoYMD(e.date) === SEL_DATE && new Date(e.date) <= new Date() && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+      if(isoYMD(e.date) === SEL_DATE && isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
         list.push({...e, tn: top.name, ti: top.id});
       }
     });
@@ -404,7 +356,7 @@ function renderCalendar() {
     <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${e.ti}','${e.id}')">
       ${e.image?`<img src="${e.image}" class="e-img">`:''}
       <div class="e-body">
-        <div class="e-top"><span class="e-date">${fDT(e.date)}</span><span class="e-tag">${esc(e.tn)}</span></div>
+        <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(e.tn)}</span></div>
         <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
       </div>
     </div>`).join('');
@@ -428,7 +380,7 @@ function render(){
   document.querySelector('.dock').style.display = 'flex';
 
   var $ = document.getElementById('main');
-  var nowObj = new Date();
+  var todayYMD = isoYMD();
 
   document.getElementById('nH').classList.toggle('on', V==='home'||V==='topic');
   document.getElementById('nT').classList.toggle('on', V==='all');
@@ -437,7 +389,7 @@ function render(){
   if(V==='home'){
     SEARCH = ''; 
     var cards = S.topics.map((t, i) => {
-      var visibleCount = (t.entries||[]).filter(e => new Date(e.date) <= nowObj).length;
+      var visibleCount = (t.entries||[]).filter(e => isoYMD(e.date) <= todayYMD).length;
       return `<div class="b-card ani d${i+2}" onclick="openTopic('${t.id}')">
         <div class="b-ico">${ico(t.icon)}</div>
         <div class="b-info"><div class="b-name">${esc(t.name)}</div><div class="b-meta">${visibleCount} notas</div></div>
@@ -465,12 +417,12 @@ function render(){
       list = t.entries.filter(e => {
         var matchesFilter = (!SF || e.subsection === SF);
         var matchesSearch = !SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase());
-        return matchesFilter && matchesSearch && new Date(e.date) <= nowObj;
+        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD;
       });
     } else {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(new Date(e.date) <= nowObj && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -492,7 +444,7 @@ function render(){
       <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
-          <div class="e-top"><span class="e-date">${fDT(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
           <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
         </div>
       </div>`).join('');
@@ -540,18 +492,18 @@ window.doSearch = function(v){
   var entriesDiv = document.querySelector('.entries');
   if(entriesDiv && (V === 'topic' || V === 'all' || V === 'calendar')) {
     var list = [];
-    var nowObj = new Date();
+    var todayYMD = isoYMD();
     if(V === 'topic'){
       var t = tp(TID);
       list = t.entries.filter(e => {
         var matchesFilter = (!SF || e.subsection === SF);
         var matchesSearch = !SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase());
-        return matchesFilter && matchesSearch && new Date(e.date) <= nowObj;
+        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD;
       });
     } else if (V === 'all') {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(new Date(e.date) <= nowObj && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -559,7 +511,7 @@ window.doSearch = function(v){
     } else if (V === 'calendar') {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(isoYMD(e.date) === SEL_DATE && new Date(e.date) <= nowObj && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(isoYMD(e.date) === SEL_DATE && isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -570,7 +522,7 @@ window.doSearch = function(v){
       <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
-          <div class="e-top"><span class="e-date">${fDT(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
           <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
         </div>
       </div>`).join('');
@@ -671,7 +623,7 @@ function showEntrySh(tid){
   var opts = (t.subsections||[]).map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   openSh(`<div class="sheet-hd"><h3>Nueva nota</h3><button class="sheet-x" onclick="closeSh()">${X_SVG}</button></div>
     <div class="sheet-body">
-      <div class="fld"><label class="fld-l">Fecha y hora de aparición</label><input type="datetime-local" id="fED" class="fld-in" value="${toLocalDT()}"></div>
+      <div class="fld"><label class="fld-l">Fecha de aparición</label><input type="date" id="fED" class="fld-in" value="${isoYMD()}"></div>
       <div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>${opts}</select></div>
       <div class="fld"><textarea id="fET" class="fld-ta" placeholder="¿Qué quieres recordar?"></textarea></div>
       <div class="fld" style="display:flex; gap:10px;">
@@ -725,8 +677,11 @@ window.saveEntry = async function(tid){
   var text = document.getElementById('fET').value.trim(), sub = document.getElementById('fES').value, date = document.getElementById('fED').value;
   if(!text && !TI && !TAudio) return;
 
-  var isoDate = date ? new Date(date).toISOString() : new Date().toISOString();
-  tp(tid).entries.push({id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, date:isoDate});
+  var saveDate = date ? new Date(date + 'T12:00:00').toISOString() : new Date().toISOString();
+
+  tp(tid).entries.push({
+    id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, date:saveDate
+  });
   sv(); closeSh(); render(); toast('Guardado');
 };
 
@@ -738,7 +693,7 @@ window.openEntry = function(tid,eid){
     <div class="sheet-body">
     ${e.image?`<img src="${e.image}" class="rd-img">`:''}
     ${e.audio?`<audio controls src="${e.audio}" style="width:100%;height:44px;margin-bottom:20px;border-radius:12px;outline:none;"></audio>`:''}
-    <span class="rd-date">${new Date(e.date).toLocaleString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+    <span class="rd-date">${fDL(e.date)}</span>
     <div class="rd-body">${esc(e.text)}</div></div>
     <div class="btn-row"><button class="btn btn-soft" onclick="delEntry('${tid}','${eid}')">Borrar</button><button class="btn btn-fill" onclick="showEditEntry('${tid}','${eid}')">Editar</button></div>`);
 };
@@ -753,7 +708,7 @@ window.showEditEntry = function(tid,eid){
   
   openSh(`<div class="sheet-hd"><h3>Editar nota</h3><button class="sheet-x" onclick="openEntry('${tid}','${eid}')">${BACK_SVG}</button></div>
     <div class="sheet-body">
-      <div class="fld"><label class="fld-l">Fecha y hora de aparición</label><input type="datetime-local" id="fED" class="fld-in" value="${toLocalDT(e.date)}"></div>
+      <div class="fld"><label class="fld-l">Fecha de aparición</label><input type="date" id="fED" class="fld-in" value="${isoYMD(e.date)}"></div>
       <div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>${opts}</select></div>
       <div class="fld"><textarea id="fET" class="fld-ta">${esc(e.text)}</textarea></div>
       <div class="fld" style="display:flex; gap:10px;">
@@ -773,8 +728,8 @@ window.updEntry = async function(tid,eid){
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
   e.text = text; e.subsection = sub; e.image = TI; e.audio = TAudio;
-  if(date) e.date = new Date(date).toISOString();
-  
+  if(date) e.date = new Date(date + 'T12:00:00').toISOString();
+
   sv(); closeSh(); render(); toast('Actualizado');
 };
 
@@ -832,3 +787,5 @@ render();
 </script>
 </body>
 </html>
+
+
