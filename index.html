@@ -210,13 +210,51 @@ var IC = {
   star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
   music:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-  plane:'<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21.5 4s-2 .5-3.5 2L14.5 9.5 6.3 7.7 5 9l6 4-3 3-3-1-2 2 4.5 1.5L5 22l2-2-1-3 3-3 4 6 1.3-1.3z"/>'
+  plane:'<path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21.5 4s-2 .5-3.5 2L14.5 9.5 6.3 7.7 5 9l6 4-3 3-3-1-2 2 4.5 1.5L5 22l2-2-1-3 3-3 4 6 1.3-1.3z"/>',
+  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'
 };
 
 var S = {topics:[]}, V = 'home', TID = null, SF = null, SEARCH = '', TI = null, TAudio = null, _t = null;
 var CY = new Date().getFullYear(), CM = new Date().getMonth(), SEL_DATE;
 var PIN = localStorage.getItem('nikki_pin') || null, IS_LOCKED = !!PIN, pinInput = '';
 var mediaRecorder, audioChunks=[], isRec=false;
+
+// Sistema de Alarmas Individuales
+setInterval(() => {
+  if (IS_LOCKED) return;
+  var now = new Date();
+  
+  var changed = false;
+  if (S && S.topics) {
+    S.topics.forEach(t => {
+      if (t.entries) {
+        t.entries.forEach(e => {
+          if (e.alarm && !e.alarmTriggered) {
+            var alarmDate = new Date(e.alarm);
+            if (now >= alarmDate) {
+              e.alarmTriggered = true;
+              changed = true;
+              triggerNoteAlarm(e.text || 'Tienes una memoria programada', t.id, e.id);
+            }
+          }
+        });
+      }
+    });
+  }
+  if (changed) { sv(); render(); }
+}, 30000); // Comprueba cada 30 segundos
+
+function triggerNoteAlarm(text, tid, eid) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    var n = new Notification("⏰ Alarma de Nikki", { body: text });
+    n.onclick = function() {
+      window.focus();
+      openTopic(tid);
+      setTimeout(() => { openEntry(tid, eid); }, 300);
+    };
+  }
+  toast("⏰ Alarma: " + text.substring(0, 30) + (text.length > 30 ? '...' : ''));
+}
 
 // IndexedDB Wrapper
 var db;
@@ -335,7 +373,6 @@ function renderCalendar() {
   
   for(var d=1; d<=daysInMonth; d++){
     var dateStr = `${CY}-${(CM+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    // Solucionado error zona horaria en calendario: Comparamos siempre fechas isoYMD locales
     var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr));
     var isSel = (dateStr === SEL_DATE);
     daysHtml += `<div class="cal-d ${isSel?'sel':''}" onclick="selDate('${dateStr}')"><span class="cal-num">${d}</span>${hasEnt?'<div class="cal-dot"></div>':''}</div>`;
@@ -344,7 +381,6 @@ function renderCalendar() {
   var list = [];
   S.topics.forEach(top => {
     top.entries.forEach(e => {
-      // Solucionado error zona horaria filtrado calendario
       if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
         list.push({...e, tn: top.name, ti: top.id});
       }
@@ -352,14 +388,16 @@ function renderCalendar() {
   });
   list.sort((a,b) => new Date(b.date) - new Date(a.date));
   
-  var cards = list.map((e, i) => `
-    <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${e.ti}','${e.id}')">
+  var cards = list.map((e, i) => {
+    var alarmIco = (e.alarm && !e.alarmTriggered) ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
+    return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${e.ti}','${e.id}')">
       ${e.image?`<img src="${e.image}" class="e-img">`:''}
       <div class="e-body">
-        <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(e.tn)}</span></div>
+        <div class="e-top"><span class="e-date">${fD(e.date)}${alarmIco}</span><span class="e-tag">${esc(e.tn)}</span></div>
         <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   return `<div class="v-bar"><span class="v-title">Calendario</span></div>
     <div style="padding: 0 24px 10px">
@@ -440,14 +478,16 @@ function render(){
       ${(t.subsections||[]).map(s => `<button class="tab ${SF===s?'on':''}" onclick="filt('${s}')">${esc(s)}</button>`).join('')}
     </div>` : '';
 
-    var cards = list.map((e, i) => `
-      <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
+    var cards = list.map((e, i) => {
+      var alarmIco = (e.alarm && !e.alarmTriggered) ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
+      return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
-          <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-top"><span class="e-date">${fD(e.date)}${alarmIco}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
           <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     $.innerHTML = `<div class="v-bar">
         <button class="v-back" onclick="goHome()">${BACK_SVG}</button>
@@ -476,7 +516,6 @@ function openSh(h){
   sh.classList.add('open');
 }
 
-// Solucionado error micrófono grabando en segundo plano al cerrar la ventana
 window.closeSh = function(){ 
   document.getElementById('ov').classList.remove('open'); 
   document.getElementById('sh').classList.remove('open'); 
@@ -488,7 +527,6 @@ window.closeSh = function(){
   }
 };
 
-// Solucionado UX teclado móvil: Solo se actualizan las entradas, no la barra de búsqueda.
 window.doSearch = function(v){ 
   SEARCH = v; 
   var entriesDiv = document.querySelector('.entries');
@@ -520,14 +558,16 @@ window.doSearch = function(v){
       });
     }
     list.sort((a,b) => new Date(b.date) - new Date(a.date));
-    var cards = list.map((e, i) => `
-      <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
+    var cards = list.map((e, i) => {
+      var alarmIco = (e.alarm && !e.alarmTriggered) ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
+      return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
-          <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-top"><span class="e-date">${fD(e.date)}${alarmIco}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
           <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     entriesDiv.innerHTML = cards || '<div class="empty">No hay resultados</div>';
   } else {
     render(); 
@@ -625,9 +665,10 @@ function showEntrySh(tid){
   var opts = (t.subsections||[]).map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   openSh(`<div class="sheet-hd"><h3>Nueva nota</h3><button class="sheet-x" onclick="closeSh()">${X_SVG}</button></div>
     <div class="sheet-body">
-      <div class="fld"><label class="fld-l">Fecha</label><input type="date" id="fED" class="fld-in" value="${isoYMD()}"></div>
+      <div class="fld"><label class="fld-l">Fecha de la memoria</label><input type="date" id="fED" class="fld-in" value="${isoYMD()}"></div>
       <div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>${opts}</select></div>
       <div class="fld"><textarea id="fET" class="fld-ta" placeholder="¿Qué quieres recordar?"></textarea></div>
+      <div class="fld"><label class="fld-l">Aviso / Alarma (Opcional)</label><input type="datetime-local" id="fEA" class="fld-in"></div>
       <div class="fld" style="display:flex; gap:10px;">
         <button class="photo-btn" onclick="document.getElementById('fEI').click()">${IMG_SVG} Foto</button>
         <button class="photo-btn" id="btnRec" onclick="toggleRec()">${MIC_SVG} Audio</button>
@@ -675,21 +716,36 @@ window.hImg = function(inp){
 window.clImg = function(){ TI=null; document.getElementById('imgP').innerHTML=''; };
 window.clAud = function(){ TAudio=null; document.getElementById('audP').innerHTML=''; };
 
-window.saveEntry = function(tid){
+window.saveEntry = async function(tid){
   var text = document.getElementById('fET').value.trim(), sub = document.getElementById('fES').value, date = document.getElementById('fED').value;
+  var alarm = document.getElementById('fEA').value;
   if(!text && !TI && !TAudio) return;
-  tp(tid).entries.push({id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, date:date?new Date(date + 'T12:00:00').toISOString():new Date().toISOString()});
+
+  if (alarm && "Notification" in window && Notification.permission !== "granted") {
+    await Notification.requestPermission();
+  }
+
+  tp(tid).entries.push({
+    id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, 
+    date:date?new Date(date + 'T12:00:00').toISOString():new Date().toISOString(),
+    alarm: alarm || null, alarmTriggered: false
+  });
   sv(); closeSh(); render(); toast('Guardado');
 };
 
 window.openEntry = function(tid,eid){
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
+  
+  var alarmInfo = e.alarm ? `<div style="font-size:0.75rem;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;gap:4px;">${ico('bell')} Alarma programada: ${new Date(e.alarm).toLocaleString('es-ES', {dateStyle:'short', timeStyle:'short'})}</div>` : '';
+
   openSh(`<div class="sheet-hd"><h3>Memoria</h3><button class="sheet-x" onclick="closeSh()">${X_SVG}</button></div>
     <div class="sheet-body">
     ${e.image?`<img src="${e.image}" class="rd-img">`:''}
     ${e.audio?`<audio controls src="${e.audio}" style="width:100%;height:44px;margin-bottom:20px;border-radius:12px;outline:none;"></audio>`:''}
-    <span class="rd-date">${fDL(e.date)}</span><div class="rd-body">${esc(e.text)}</div></div>
+    <span class="rd-date">${fDL(e.date)}</span>
+    ${alarmInfo}
+    <div class="rd-body">${esc(e.text)}</div></div>
     <div class="btn-row"><button class="btn btn-soft" onclick="delEntry('${tid}','${eid}')">Borrar</button><button class="btn btn-fill" onclick="showEditEntry('${tid}','${eid}')">Editar</button></div>`);
 };
 
@@ -700,11 +756,13 @@ window.showEditEntry = function(tid,eid){
   var opts = (t.subsections||[]).map(s => `<option value="${esc(s)}" ${e.subsection===s?'selected':''}>${esc(s)}</option>`).join('');
   var prevI = TI ? `<div class="ph-prev"><img src="${TI}"><button class="ph-rm" onclick="clImg()">${X_SVG}</button></div>` : '';
   var prevA = TAudio ? `<div class="ph-prev"><audio controls src="${TAudio}" style="width:100%;height:44px;margin-top:10px;border-radius:12px;"></audio><button class="ph-rm" onclick="clAud()">${X_SVG}</button></div>` : '';
+  
   openSh(`<div class="sheet-hd"><h3>Editar nota</h3><button class="sheet-x" onclick="openEntry('${tid}','${eid}')">${BACK_SVG}</button></div>
     <div class="sheet-body">
-      <div class="fld"><label class="fld-l">Fecha</label><input type="date" id="fED" class="fld-in" value="${isoYMD(e.date)}"></div>
+      <div class="fld"><label class="fld-l">Fecha de la memoria</label><input type="date" id="fED" class="fld-in" value="${isoYMD(e.date)}"></div>
       <div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>${opts}</select></div>
       <div class="fld"><textarea id="fET" class="fld-ta">${esc(e.text)}</textarea></div>
+      <div class="fld"><label class="fld-l">Aviso / Alarma (Opcional)</label><input type="datetime-local" id="fEA" class="fld-in" value="${e.alarm || ''}"></div>
       <div class="fld" style="display:flex; gap:10px;">
         <button class="photo-btn" onclick="document.getElementById('fEI').click()">${IMG_SVG} Cambiar Foto</button>
         <button class="photo-btn" id="btnRec" onclick="toggleRec()">${MIC_SVG} Nuevo Audio</button>
@@ -715,13 +773,25 @@ window.showEditEntry = function(tid,eid){
     <div class="btn-row"><button class="btn btn-fill" onclick="updEntry('${tid}','${eid}')">Actualizar</button></div>`);
 };
 
-window.updEntry = function(tid,eid){
+window.updEntry = async function(tid,eid){
   var text = document.getElementById('fET').value.trim(), sub = document.getElementById('fES').value, date = document.getElementById('fED').value;
+  var alarm = document.getElementById('fEA').value;
   if(!text && !TI && !TAudio) return;
+
+  if (alarm && "Notification" in window && Notification.permission !== "granted") {
+    await Notification.requestPermission();
+  }
+
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
   e.text = text; e.subsection = sub; e.image = TI; e.audio = TAudio;
   if(date) e.date = new Date(date + 'T12:00:00').toISOString();
+  
+  if(alarm !== e.alarm) {
+    e.alarm = alarm || null;
+    e.alarmTriggered = false; // Resetear alarma si se cambió
+  }
+
   sv(); closeSh(); render(); toast('Actualizado');
 };
 
