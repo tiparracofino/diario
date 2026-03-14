@@ -335,7 +335,8 @@ function renderCalendar() {
   
   for(var d=1; d<=daysInMonth; d++){
     var dateStr = `${CY}-${(CM+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    var hasEnt = S.topics.some(t => t.entries.some(e => e.date.startsWith(dateStr)));
+    // Solucionado error zona horaria en calendario: Comparamos siempre fechas isoYMD locales
+    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr));
     var isSel = (dateStr === SEL_DATE);
     daysHtml += `<div class="cal-d ${isSel?'sel':''}" onclick="selDate('${dateStr}')"><span class="cal-num">${d}</span>${hasEnt?'<div class="cal-dot"></div>':''}</div>`;
   }
@@ -343,7 +344,8 @@ function renderCalendar() {
   var list = [];
   S.topics.forEach(top => {
     top.entries.forEach(e => {
-      if(e.date.startsWith(SEL_DATE) && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+      // Solucionado error zona horaria filtrado calendario
+      if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
         list.push({...e, tn: top.name, ti: top.id});
       }
     });
@@ -474,9 +476,66 @@ function openSh(h){
   sh.classList.add('open');
 }
 
-window.closeSh = function(){ document.getElementById('ov').classList.remove('open'); document.getElementById('sh').classList.remove('open'); TI=null; TAudio=null; };
-window.doSearch = function(v){ SEARCH = v; render(); };
+// Solucionado error micrófono grabando en segundo plano al cerrar la ventana
+window.closeSh = function(){ 
+  document.getElementById('ov').classList.remove('open'); 
+  document.getElementById('sh').classList.remove('open'); 
+  TI=null; TAudio=null; 
+  if(isRec && mediaRecorder){
+    mediaRecorder.stop();
+    isRec=false;
+    if(mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(t=>t.stop());
+  }
+};
+
+// Solucionado UX teclado móvil: Solo se actualizan las entradas, no la barra de búsqueda.
+window.doSearch = function(v){ 
+  SEARCH = v; 
+  var entriesDiv = document.querySelector('.entries');
+  if(entriesDiv && (V === 'topic' || V === 'all' || V === 'calendar')) {
+    var list = [];
+    var todayYMD = isoYMD();
+    if(V === 'topic'){
+      var t = tp(TID);
+      list = t.entries.filter(e => {
+        var matchesFilter = (!SF || e.subsection === SF);
+        var matchesSearch = !SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase());
+        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD;
+      });
+    } else if (V === 'all') {
+      S.topics.forEach(top => {
+        top.entries.forEach(e => {
+          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+            list.push({...e, tn: top.name, ti: top.id});
+          }
+        });
+      });
+    } else if (V === 'calendar') {
+      S.topics.forEach(top => {
+        top.entries.forEach(e => {
+          if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+            list.push({...e, tn: top.name, ti: top.id});
+          }
+        });
+      });
+    }
+    list.sort((a,b) => new Date(b.date) - new Date(a.date));
+    var cards = list.map((e, i) => `
+      <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
+        ${e.image?`<img src="${e.image}" class="e-img">`:''}
+        <div class="e-body">
+          <div class="e-top"><span class="e-date">${fD(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
+        </div>
+      </div>`).join('');
+    entriesDiv.innerHTML = cards || '<div class="empty">No hay resultados</div>';
+  } else {
+    render(); 
+  }
+};
+
 window.goHome = function(){ V='home'; TID=null; SF=null; render(); };
+window.openTopic = function(i){ V='topic'; TID=i; SF=null; SEARCH=''; render(); };
 window.goCalendar = function(){ V='calendar'; TID=null; SF=null; render(); };
 window.goTimeline = function(){ V='all'; TID=null; SF=null; SEARCH=''; render(); };
 window.filt = function(s){ SF=s; render(); };
@@ -530,7 +589,7 @@ window.showTopicSh = function(eid){
     <div class="sheet-body">
       <div class="fld"><label class="fld-l">Título</label><input id="fN" class="fld-in" value="${esc(t?t.name:'')}"></div>
       <div class="fld"><label class="fld-l">Icono</label><div class="ico-grid">${icons}</div><input type="hidden" id="fI" value="${t?t.icon:'folder'}"></div>
-      <div class="fld"><label class="fld-l">Etiquetas (separadas por coma)</label><input id="fS" class="fld-in" value="${t?t.subsections.join(','):''}"></div>
+      <div class="fld"><label class="fld-l">Etiquetas (separadas por coma)</label><input id="fS" class="fld-in" value="${t?(t.subsections||[]).join(','):''}"></div>
     </div>
     <div class="btn-row">${t?`<button class="btn btn-warn" onclick="delTopic('${t.id}')">Borrar</button>`:''}<button class="btn btn-fill" onclick="saveTopic('${eid||''}')">Guardar</button></div>`);
 };
@@ -599,7 +658,7 @@ window.toggleRec = async function(){
         document.getElementById('audP').innerHTML = `<div class="ph-prev"><audio controls src="${TAudio}" style="width:100%;height:44px;margin-top:10px;border-radius:12px;"></audio><button class="ph-rm" onclick="clAud()">${X_SVG}</button></div>`;
       };
       r.readAsDataURL(blob);
-      stream.getTracks().forEach(t=>t.stop());
+      if(stream) stream.getTracks().forEach(t=>t.stop());
     };
     mediaRecorder.start(); isRec=true;
     document.getElementById('btnRec').innerHTML = '■ Grabando...';
