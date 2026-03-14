@@ -178,6 +178,9 @@ input,textarea,select{font-family:inherit;color:inherit;background:var(--surf-1)
 .pin-btn:active{box-shadow:var(--neo-down);transform:scale(0.92)}
 .pin-btn.empty{box-shadow:none;background:transparent;pointer-events:none}
 
+.cal-export-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);color:var(--blue);border-radius:var(--r-pill);font-size:0.75rem;font-weight:700;box-shadow:var(--neo-up-sm);transition:all 0.15s;margin-top:8px}
+.cal-export-btn:active{box-shadow:var(--neo-down);transform:scale(0.95)}
+
 @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .ani{animation:rise 0.5s var(--ease) both}
 .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}
@@ -218,43 +221,6 @@ var S = {topics:[]}, V = 'home', TID = null, SF = null, SEARCH = '', TI = null, 
 var CY = new Date().getFullYear(), CM = new Date().getMonth(), SEL_DATE;
 var PIN = localStorage.getItem('nikki_pin') || null, IS_LOCKED = !!PIN, pinInput = '';
 var mediaRecorder, audioChunks=[], isRec=false;
-
-// Sistema de Alarmas Individuales
-setInterval(() => {
-  if (IS_LOCKED) return;
-  var now = new Date();
-  
-  var changed = false;
-  if (S && S.topics) {
-    S.topics.forEach(t => {
-      if (t.entries) {
-        t.entries.forEach(e => {
-          if (e.alarm && !e.alarmTriggered) {
-            var alarmDate = new Date(e.alarm);
-            if (now >= alarmDate) {
-              e.alarmTriggered = true;
-              changed = true;
-              triggerNoteAlarm(e.text || 'Tienes una memoria programada', t.id, e.id);
-            }
-          }
-        });
-      }
-    });
-  }
-  if (changed) { sv(); render(); }
-}, 30000); // Comprueba cada 30 segundos
-
-function triggerNoteAlarm(text, tid, eid) {
-  if ("Notification" in window && Notification.permission === "granted") {
-    var n = new Notification("⏰ Alarma de Nikki", { body: text });
-    n.onclick = function() {
-      window.focus();
-      openTopic(tid);
-      setTimeout(() => { openEntry(tid, eid); }, 300);
-    };
-  }
-  toast("⏰ Alarma: " + text.substring(0, 30) + (text.length > 30 ? '...' : ''));
-}
 
 // IndexedDB Wrapper
 var db;
@@ -321,6 +287,46 @@ function compress(file,cb){
   };
   r.readAsDataURL(file);
 }
+
+// Nueva función para añadir evento al Calendario de Apple/Google
+window.addToCalendar = function(dateISO, text) {
+  var d = new Date(dateISO);
+  var endD = new Date(d.getTime() + 15 * 60000); // Duración del evento: 15 mins
+  
+  var pad = n => n < 10 ? '0' + n : n;
+  var fmt = dt => dt.getUTCFullYear() + pad(dt.getUTCMonth()+1) + pad(dt.getUTCDate()) + 'T' + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + 'Z';
+
+  // Formato ICS estricto
+  var icsMsg = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Nikki Diario//ES
+BEGIN:VEVENT
+UID:${gid()}@nikkidiary.local
+DTSTAMP:${fmt(new Date())}
+DTSTART:${fmt(d)}
+DTEND:${fmt(endD)}
+SUMMARY:Alarma de Nikki 📔
+DESCRIPTION:${(text||'Recuerdos programados').replace(/\n/g, '\\n')}
+BEGIN:VALARM
+TRIGGER:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:Alarma de Nikki
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+  var blob = new Blob([icsMsg], { type: 'text/calendar;charset=utf-8' });
+  var url = window.URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'alarma-nikki.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+  toast("Se abrirá en Calendario...");
+};
 
 var GEAR_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 var BACK_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>';
@@ -389,7 +395,7 @@ function renderCalendar() {
   list.sort((a,b) => new Date(b.date) - new Date(a.date));
   
   var cards = list.map((e, i) => {
-    var alarmIco = (e.alarm && !e.alarmTriggered) ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
+    var alarmIco = e.alarm ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
     return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${e.ti}','${e.id}')">
       ${e.image?`<img src="${e.image}" class="e-img">`:''}
       <div class="e-body">
@@ -479,7 +485,7 @@ function render(){
     </div>` : '';
 
     var cards = list.map((e, i) => {
-      var alarmIco = (e.alarm && !e.alarmTriggered) ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
+      var alarmIco = e.alarm ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
       return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
@@ -559,7 +565,7 @@ window.doSearch = function(v){
     }
     list.sort((a,b) => new Date(b.date) - new Date(a.date));
     var cards = list.map((e, i) => {
-      var alarmIco = (e.alarm && !e.alarmTriggered) ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
+      var alarmIco = e.alarm ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
       return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
@@ -721,14 +727,10 @@ window.saveEntry = async function(tid){
   var alarm = document.getElementById('fEA').value;
   if(!text && !TI && !TAudio) return;
 
-  if (alarm && "Notification" in window && Notification.permission !== "granted") {
-    await Notification.requestPermission();
-  }
-
   tp(tid).entries.push({
     id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, 
     date:date?new Date(date + 'T12:00:00').toISOString():new Date().toISOString(),
-    alarm: alarm || null, alarmTriggered: false
+    alarm: alarm || null
   });
   sv(); closeSh(); render(); toast('Guardado');
 };
@@ -737,7 +739,12 @@ window.openEntry = function(tid,eid){
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
   
-  var alarmInfo = e.alarm ? `<div style="font-size:0.75rem;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;gap:4px;">${ico('bell')} Alarma programada: ${new Date(e.alarm).toLocaleString('es-ES', {dateStyle:'short', timeStyle:'short'})}</div>` : '';
+  var alarmInfo = e.alarm ? `<div style="padding:10px 14px;background:var(--surf-1);border-radius:var(--r-sm);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--neo-down);">
+    <div style="font-size:0.75rem;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;">
+      ${ico('bell')} ${new Date(e.alarm).toLocaleString('es-ES', {dateStyle:'short', timeStyle:'short'})}
+    </div>
+    <button class="cal-export-btn" onclick="addToCalendar('${e.alarm}', '${esc(e.text).replace(/'/g,"\\'").replace(/\n/g," ").substring(0,100)}')">+ Calendario</button>
+  </div>` : '';
 
   openSh(`<div class="sheet-hd"><h3>Memoria</h3><button class="sheet-x" onclick="closeSh()">${X_SVG}</button></div>
     <div class="sheet-body">
@@ -778,19 +785,12 @@ window.updEntry = async function(tid,eid){
   var alarm = document.getElementById('fEA').value;
   if(!text && !TI && !TAudio) return;
 
-  if (alarm && "Notification" in window && Notification.permission !== "granted") {
-    await Notification.requestPermission();
-  }
-
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
   e.text = text; e.subsection = sub; e.image = TI; e.audio = TAudio;
   if(date) e.date = new Date(date + 'T12:00:00').toISOString();
   
-  if(alarm !== e.alarm) {
-    e.alarm = alarm || null;
-    e.alarmTriggered = false; // Resetear alarma si se cambió
-  }
+  e.alarm = alarm || null;
 
   sv(); closeSh(); render(); toast('Actualizado');
 };
