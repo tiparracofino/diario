@@ -54,22 +54,24 @@ input,textarea,select{font-family:inherit;color:inherit;background:var(--surf-1)
 .neo-btn{width:48px;height:48px;border-radius:16px;background:var(--surf-1);box-shadow:var(--neo-up-sm);display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all 0.15s ease}
 .neo-btn:active{box-shadow:var(--neo-down);transform:scale(0.96)}
 
-.hero-card{border-radius:var(--r-lg);padding:2px;background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.1));margin-bottom:36px;position:relative}
+.hero-card{border-radius:var(--r-lg);padding:2px;background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.1));margin-bottom:16px;position:relative}
 [data-theme="dark"] .hero-card{background:linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))}
-.hero-card-inner{border-radius:30px;overflow:hidden;position:relative;aspect-ratio:2;background:linear-gradient(160deg,#C0CFD5 0%,#A0B3BE 30%,#809CAF 60%,#6B8A9A 100%)}
+.hero-card-inner{border-radius:30px;overflow:hidden;position:relative;aspect-ratio:4.5;background:linear-gradient(160deg,#C0CFD5 0%,#A0B3BE 30%,#809CAF 60%,#6B8A9A 100%)}
 [data-theme="dark"] .hero-card-inner{background:linear-gradient(160deg,#1E2A33 0%,#1A252E 30%,#161F28 60%,#121A22 100%)}
 .hero-card-inner svg{width:100%;height:100%;position:absolute;inset:0}
-.hero-pill{position:absolute;top:14px;left:14px;background:var(--glass-heavy);border:1px solid var(--glass-border);padding:7px 16px;border-radius:var(--r-pill);font-size:0.72rem;font-weight:600;color:var(--text-1);box-shadow:var(--neo-flat)}
-.hero-kanji{position:absolute;bottom:14px;right:18px;font-family:var(--f-jp);font-size:2.6rem;font-weight:600;color:rgba(255,255,255,0.2);line-height:1;pointer-events:none}
+.hero-pill{position:absolute;top:10px;left:10px;background:var(--glass-heavy);border:1px solid var(--glass-border);padding:4px 12px;border-radius:var(--r-pill);font-size:0.65rem;font-weight:600;color:var(--text-1);box-shadow:var(--neo-flat)}
+.hero-kanji{position:absolute;bottom:6px;right:12px;font-family:var(--f-jp);font-size:1.8rem;font-weight:600;color:rgba(255,255,255,0.2);line-height:1;pointer-events:none}
 [data-theme="dark"] .hero-kanji{color:rgba(255,255,255,0.07)}
 
-.sec-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 24px;margin-bottom:18px}
-.sec-head h2{font-family:var(--f-display);font-size:1.35rem;font-weight:700}
-.sec-head .badge{font-size:0.7rem;font-weight:700;padding:5px 12px;border-radius:var(--r-pill);background:var(--blue-soft);color:var(--blue)}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;padding:0 24px;margin-bottom:12px}
+.sec-head h2{font-family:var(--f-display);font-size:1.25rem;font-weight:700}
+.sec-head .badge{font-size:0.65rem;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);background:var(--blue-soft);color:var(--blue)}
 
-.bento{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:0 24px 32px}
-.b-card{background:var(--surf-1);border-radius:var(--r-lg);padding:20px 18px;display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:0.88;box-shadow:var(--neo-up);cursor:pointer;position:relative;overflow:hidden;transition:box-shadow 0.2s,transform 0.2s var(--ease)}
+.bento{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 24px 32px}
+.b-card{background:var(--surf-1);border-radius:var(--r-md);padding:12px;display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:1.5;box-shadow:var(--neo-up);cursor:pointer;position:relative;overflow:hidden;transition:box-shadow 0.2s,transform 0.2s var(--ease)}
 .b-card:active{box-shadow:var(--neo-down);transform:scale(0.97)}
+.b-name{font-size:0.85rem;font-weight:700;margin-bottom:2px;color:var(--text-1)}
+.b-meta{font-size:0.65rem;font-weight:600;color:var(--text-3)}
 
 .search-box{padding:0 24px 16px;position:relative}
 .search-in{width:100%;height:46px;padding:0 44px 0 18px;background:var(--surf-1);border-radius:var(--r-pill);box-shadow:var(--neo-down);border:none;font-size:0.88rem;color:var(--text-1);outline:none;transition:all 0.2s}
@@ -337,7 +339,8 @@ function renderCalendar() {
   
   for(var d=1; d<=daysInMonth; d++){
     var dateStr = `${CY}-${(CM+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr && isoYMD(e.date) <= todayYMD));
+    // CAMBIO: Se eliminó la restricción isoYMD(e.date) <= todayYMD para mostrar los puntos de notas futuras
+    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr)); 
     var isSel = (dateStr === SEL_DATE);
     daysHtml += `<div class="cal-d ${isSel?'sel':''}" onclick="selDate('${dateStr}')"><span class="cal-num">${d}</span>${hasEnt?'<div class="cal-dot"></div>':''}</div>`;
   }
@@ -345,7 +348,8 @@ function renderCalendar() {
   var list = [];
   S.topics.forEach(top => {
     top.entries.forEach(e => {
-      if(isoYMD(e.date) === SEL_DATE && isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+      // CAMBIO: Se eliminó la restricción para listar notas futuras en el día seleccionado
+      if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) { 
         list.push({...e, tn: top.name, ti: top.id});
       }
     });
@@ -389,6 +393,7 @@ function render(){
   if(V==='home'){
     SEARCH = ''; 
     var cards = S.topics.map((t, i) => {
+      // Las notas futuras siguen ocultas en el conteo del Home
       var visibleCount = (t.entries||[]).filter(e => isoYMD(e.date) <= todayYMD).length;
       return `<div class="b-card ani d${i+2}" onclick="openTopic('${t.id}')">
         <div class="b-ico">${ico(t.icon)}</div>
@@ -417,12 +422,12 @@ function render(){
       list = t.entries.filter(e => {
         var matchesFilter = (!SF || e.subsection === SF);
         var matchesSearch = !SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase());
-        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD;
+        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD; // Siguen ocultas en Cuadernos
       });
     } else {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) { // Siguen ocultas en Línea de tiempo
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -511,7 +516,8 @@ window.doSearch = function(v){
     } else if (V === 'calendar') {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(isoYMD(e.date) === SEL_DATE && isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          // CAMBIO: Al buscar dentro del calendario, también ignoramos la regla del límite de fecha actual
+          if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) { 
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -787,5 +793,3 @@ render();
 </script>
 </body>
 </html>
-
-
