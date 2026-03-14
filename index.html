@@ -263,6 +263,12 @@ function isoYMD(dstr) {
 }
 function fD(d){ return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}); }
 function fDL(d){ return new Date(d).toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+function fDT(d){ return new Date(d).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function toLocalDT(dstr) {
+  var d = dstr ? new Date(dstr) : new Date();
+  var pad = n => n < 10 ? '0' + n : n;
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
 function esc(s){ return (!s) ? '' : s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function highlight(text, query) {
@@ -379,7 +385,7 @@ function renderCalendar() {
   
   for(var d=1; d<=daysInMonth; d++){
     var dateStr = `${CY}-${(CM+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
-    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr));
+    var hasEnt = S.topics.some(t => t.entries.some(e => isoYMD(e.date) === dateStr && new Date(e.date) <= new Date()));
     var isSel = (dateStr === SEL_DATE);
     daysHtml += `<div class="cal-d ${isSel?'sel':''}" onclick="selDate('${dateStr}')"><span class="cal-num">${d}</span>${hasEnt?'<div class="cal-dot"></div>':''}</div>`;
   }
@@ -387,23 +393,21 @@ function renderCalendar() {
   var list = [];
   S.topics.forEach(top => {
     top.entries.forEach(e => {
-      if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+      if(isoYMD(e.date) === SEL_DATE && new Date(e.date) <= new Date() && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
         list.push({...e, tn: top.name, ti: top.id});
       }
     });
   });
   list.sort((a,b) => new Date(b.date) - new Date(a.date));
   
-  var cards = list.map((e, i) => {
-    var alarmIco = e.alarm ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
-    return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${e.ti}','${e.id}')">
+  var cards = list.map((e, i) => `
+    <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${e.ti}','${e.id}')">
       ${e.image?`<img src="${e.image}" class="e-img">`:''}
       <div class="e-body">
-        <div class="e-top"><span class="e-date">${fD(e.date)}${alarmIco}</span><span class="e-tag">${esc(e.tn)}</span></div>
+        <div class="e-top"><span class="e-date">${fDT(e.date)}</span><span class="e-tag">${esc(e.tn)}</span></div>
         <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 
   return `<div class="v-bar"><span class="v-title">Calendario</span></div>
     <div style="padding: 0 24px 10px">
@@ -424,7 +428,7 @@ function render(){
   document.querySelector('.dock').style.display = 'flex';
 
   var $ = document.getElementById('main');
-  var todayYMD = isoYMD();
+  var nowObj = new Date();
 
   document.getElementById('nH').classList.toggle('on', V==='home'||V==='topic');
   document.getElementById('nT').classList.toggle('on', V==='all');
@@ -433,7 +437,7 @@ function render(){
   if(V==='home'){
     SEARCH = ''; 
     var cards = S.topics.map((t, i) => {
-      var visibleCount = (t.entries||[]).filter(e => isoYMD(e.date) <= todayYMD).length;
+      var visibleCount = (t.entries||[]).filter(e => new Date(e.date) <= nowObj).length;
       return `<div class="b-card ani d${i+2}" onclick="openTopic('${t.id}')">
         <div class="b-ico">${ico(t.icon)}</div>
         <div class="b-info"><div class="b-name">${esc(t.name)}</div><div class="b-meta">${visibleCount} notas</div></div>
@@ -461,12 +465,12 @@ function render(){
       list = t.entries.filter(e => {
         var matchesFilter = (!SF || e.subsection === SF);
         var matchesSearch = !SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase());
-        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD;
+        return matchesFilter && matchesSearch && new Date(e.date) <= nowObj;
       });
     } else {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(new Date(e.date) <= nowObj && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -484,16 +488,14 @@ function render(){
       ${(t.subsections||[]).map(s => `<button class="tab ${SF===s?'on':''}" onclick="filt('${s}')">${esc(s)}</button>`).join('')}
     </div>` : '';
 
-    var cards = list.map((e, i) => {
-      var alarmIco = e.alarm ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
-      return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
+    var cards = list.map((e, i) => `
+      <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
-          <div class="e-top"><span class="e-date">${fD(e.date)}${alarmIco}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-top"><span class="e-date">${fDT(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
           <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
         </div>
-      </div>`;
-    }).join('');
+      </div>`).join('');
 
     $.innerHTML = `<div class="v-bar">
         <button class="v-back" onclick="goHome()">${BACK_SVG}</button>
@@ -538,18 +540,18 @@ window.doSearch = function(v){
   var entriesDiv = document.querySelector('.entries');
   if(entriesDiv && (V === 'topic' || V === 'all' || V === 'calendar')) {
     var list = [];
-    var todayYMD = isoYMD();
+    var nowObj = new Date();
     if(V === 'topic'){
       var t = tp(TID);
       list = t.entries.filter(e => {
         var matchesFilter = (!SF || e.subsection === SF);
         var matchesSearch = !SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase());
-        return matchesFilter && matchesSearch && isoYMD(e.date) <= todayYMD;
+        return matchesFilter && matchesSearch && new Date(e.date) <= nowObj;
       });
     } else if (V === 'all') {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(isoYMD(e.date) <= todayYMD && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(new Date(e.date) <= nowObj && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
@@ -557,23 +559,21 @@ window.doSearch = function(v){
     } else if (V === 'calendar') {
       S.topics.forEach(top => {
         top.entries.forEach(e => {
-          if(isoYMD(e.date) === SEL_DATE && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
+          if(isoYMD(e.date) === SEL_DATE && new Date(e.date) <= nowObj && (!SEARCH || e.text.toLowerCase().includes(SEARCH.toLowerCase()))) {
             list.push({...e, tn: top.name, ti: top.id});
           }
         });
       });
     }
     list.sort((a,b) => new Date(b.date) - new Date(a.date));
-    var cards = list.map((e, i) => {
-      var alarmIco = e.alarm ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" style="vertical-align:-1px;margin-left:4px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>` : '';
-      return `<div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
+    var cards = list.map((e, i) => `
+      <div class="e-card ani d${Math.min(i+1,4)}" onclick="openEntry('${V==='topic'?TID:e.ti}','${e.id}')">
         ${e.image?`<img src="${e.image}" class="e-img">`:''}
         <div class="e-body">
-          <div class="e-top"><span class="e-date">${fD(e.date)}${alarmIco}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
+          <div class="e-top"><span class="e-date">${fDT(e.date)}</span><span class="e-tag">${esc(V==='topic'?(e.subsection||''):(e.tn))}</span></div>
           <div class="e-text">${highlight(e.text || (e.audio?'Nota de voz':'Sin texto'), SEARCH)}</div>
         </div>
-      </div>`;
-    }).join('');
+      </div>`).join('');
     entriesDiv.innerHTML = cards || '<div class="empty">No hay resultados</div>';
   } else {
     render(); 
@@ -671,10 +671,9 @@ function showEntrySh(tid){
   var opts = (t.subsections||[]).map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   openSh(`<div class="sheet-hd"><h3>Nueva nota</h3><button class="sheet-x" onclick="closeSh()">${X_SVG}</button></div>
     <div class="sheet-body">
-      <div class="fld"><label class="fld-l">Fecha de la memoria</label><input type="date" id="fED" class="fld-in" value="${isoYMD()}"></div>
+      <div class="fld"><label class="fld-l">Fecha y hora de aparición</label><input type="datetime-local" id="fED" class="fld-in" value="${toLocalDT()}"></div>
       <div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>${opts}</select></div>
       <div class="fld"><textarea id="fET" class="fld-ta" placeholder="¿Qué quieres recordar?"></textarea></div>
-      <div class="fld"><label class="fld-l">Aviso / Alarma (Opcional)</label><input type="datetime-local" id="fEA" class="fld-in"></div>
       <div class="fld" style="display:flex; gap:10px;">
         <button class="photo-btn" onclick="document.getElementById('fEI').click()">${IMG_SVG} Foto</button>
         <button class="photo-btn" id="btnRec" onclick="toggleRec()">${MIC_SVG} Audio</button>
@@ -724,14 +723,10 @@ window.clAud = function(){ TAudio=null; document.getElementById('audP').innerHTM
 
 window.saveEntry = async function(tid){
   var text = document.getElementById('fET').value.trim(), sub = document.getElementById('fES').value, date = document.getElementById('fED').value;
-  var alarm = document.getElementById('fEA').value;
   if(!text && !TI && !TAudio) return;
 
-  tp(tid).entries.push({
-    id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, 
-    date:date?new Date(date + 'T12:00:00').toISOString():new Date().toISOString(),
-    alarm: alarm || null
-  });
+  var isoDate = date ? new Date(date).toISOString() : new Date().toISOString();
+  tp(tid).entries.push({id:gid(), text:text, image:TI, audio:TAudio, subsection:sub, date:isoDate});
   sv(); closeSh(); render(); toast('Guardado');
 };
 
@@ -739,19 +734,11 @@ window.openEntry = function(tid,eid){
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
   
-  var alarmInfo = e.alarm ? `<div style="padding:10px 14px;background:var(--surf-1);border-radius:var(--r-sm);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--neo-down);">
-    <div style="font-size:0.75rem;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;">
-      ${ico('bell')} ${new Date(e.alarm).toLocaleString('es-ES', {dateStyle:'short', timeStyle:'short'})}
-    </div>
-    <button class="cal-export-btn" onclick="addToCalendar('${e.alarm}', '${esc(e.text).replace(/'/g,"\\'").replace(/\n/g," ").substring(0,100)}')">+ Calendario</button>
-  </div>` : '';
-
   openSh(`<div class="sheet-hd"><h3>Memoria</h3><button class="sheet-x" onclick="closeSh()">${X_SVG}</button></div>
     <div class="sheet-body">
     ${e.image?`<img src="${e.image}" class="rd-img">`:''}
     ${e.audio?`<audio controls src="${e.audio}" style="width:100%;height:44px;margin-bottom:20px;border-radius:12px;outline:none;"></audio>`:''}
-    <span class="rd-date">${fDL(e.date)}</span>
-    ${alarmInfo}
+    <span class="rd-date">${new Date(e.date).toLocaleString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
     <div class="rd-body">${esc(e.text)}</div></div>
     <div class="btn-row"><button class="btn btn-soft" onclick="delEntry('${tid}','${eid}')">Borrar</button><button class="btn btn-fill" onclick="showEditEntry('${tid}','${eid}')">Editar</button></div>`);
 };
@@ -766,10 +753,9 @@ window.showEditEntry = function(tid,eid){
   
   openSh(`<div class="sheet-hd"><h3>Editar nota</h3><button class="sheet-x" onclick="openEntry('${tid}','${eid}')">${BACK_SVG}</button></div>
     <div class="sheet-body">
-      <div class="fld"><label class="fld-l">Fecha de la memoria</label><input type="date" id="fED" class="fld-in" value="${isoYMD(e.date)}"></div>
+      <div class="fld"><label class="fld-l">Fecha y hora de aparición</label><input type="datetime-local" id="fED" class="fld-in" value="${toLocalDT(e.date)}"></div>
       <div class="fld"><select id="fES" class="fld-sel"><option value="">Sin etiqueta</option>${opts}</select></div>
       <div class="fld"><textarea id="fET" class="fld-ta">${esc(e.text)}</textarea></div>
-      <div class="fld"><label class="fld-l">Aviso / Alarma (Opcional)</label><input type="datetime-local" id="fEA" class="fld-in" value="${e.alarm || ''}"></div>
       <div class="fld" style="display:flex; gap:10px;">
         <button class="photo-btn" onclick="document.getElementById('fEI').click()">${IMG_SVG} Cambiar Foto</button>
         <button class="photo-btn" id="btnRec" onclick="toggleRec()">${MIC_SVG} Nuevo Audio</button>
@@ -782,16 +768,13 @@ window.showEditEntry = function(tid,eid){
 
 window.updEntry = async function(tid,eid){
   var text = document.getElementById('fET').value.trim(), sub = document.getElementById('fES').value, date = document.getElementById('fED').value;
-  var alarm = document.getElementById('fEA').value;
   if(!text && !TI && !TAudio) return;
 
   var t=tp(tid), e=t.entries.find(en=>en.id===eid);
   if(!e) return;
   e.text = text; e.subsection = sub; e.image = TI; e.audio = TAudio;
-  if(date) e.date = new Date(date + 'T12:00:00').toISOString();
+  if(date) e.date = new Date(date).toISOString();
   
-  e.alarm = alarm || null;
-
   sv(); closeSh(); render(); toast('Actualizado');
 };
 
